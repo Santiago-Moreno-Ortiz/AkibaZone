@@ -21,9 +21,26 @@ class AnimeRepository(
     private val TAG = "AnimeRepository"
 
     val history = animeDao.getAllHistory()
+    val favorites = animeDao.getFavorites()
+
+    suspend fun toggleFavorite(anime: Anime) = withContext(Dispatchers.IO) {
+        val existing = animeDao.getAnimeById(anime.id)
+        val dataAnime = com.example.projectjuansantiagoaby.data.model.Anime(
+            id = anime.id,
+            title = anime.title,
+            imageUrl = anime.imageUrl,
+            link = anime.link,
+            type = anime.type,
+            rating = anime.rating,
+            isFavorite = !(existing?.isFavorite ?: false),
+            timestamp = System.currentTimeMillis()
+        )
+        animeDao.insertAnime(dataAnime)
+    }
 
     suspend fun getPopularAnime(): List<Anime> = withContext(Dispatchers.IO) {
         try {
+            Log.d(TAG, "getPopularAnime: Requesting trending anime from Anilist")
             val query = AnilistQueries.getTrendingQuery()
             val response = anilistService.getAnimeList(com.example.projectjuansantiagoaby.data.network.AnilistRequest(query))
             val list = response.data?.page?.media?.map { media ->
@@ -47,17 +64,34 @@ class AnimeRepository(
 
     suspend fun getLatestReleases(): List<Anime> = withContext(Dispatchers.IO) {
         try {
-            val list = scraper.getLatestReleases().map { it.toDomain() }
-            Log.d(TAG, "getLatestReleases: Fetched ${list.size} items")
-            list
+            val query = AnilistQueries.getLatestReleasesQuery()
+            val response = anilistService.getAnimeList(com.example.projectjuansantiagoaby.data.network.AnilistRequest(query))
+            val list = response.data?.page?.media?.map { media ->
+                Anime(
+                    id = media.id?.toString() ?: "",
+                    title = media.title?.romaji ?: media.title?.english ?: "Unknown",
+                    imageUrl = media.coverImage?.extraLarge ?: media.coverImage?.large ?: "",
+                    link = media.id?.toString() ?: "",
+                    type = media.type,
+                    rating = (media.averageScore?.toFloat()?.div(10f))?.toString() ?: "0.0",
+                    description = media.description
+                )
+            } ?: emptyList()
+            if (list.isNotEmpty()) {
+                Log.d(TAG, "getLatestReleases: Fetched ${list.size} items from Anilist")
+                list
+            } else {
+                scraper.getLatestReleases().map { it.toDomain() }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "getLatestReleases error: ${e.message}")
-            emptyList()
+            scraper.getLatestReleases().map { it.toDomain() }
         }
     }
 
     suspend fun searchAnime(queryStr: String): List<Anime> = withContext(Dispatchers.IO) {
         try {
+            Log.d(TAG, "searchAnime: Searching for $queryStr on Anilist")
             val query = AnilistQueries.getSearchQuery(queryStr)
             val response = anilistService.getAnimeList(com.example.projectjuansantiagoaby.data.network.AnilistRequest(query))
             val list = response.data?.page?.media?.map { media ->

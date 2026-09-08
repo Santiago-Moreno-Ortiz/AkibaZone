@@ -12,6 +12,12 @@ interface AnimeDao {
     @Query("SELECT * FROM anime_history ORDER BY timestamp DESC")
     fun getAllHistory(): LiveData<List<Anime>>
 
+    @Query("SELECT * FROM anime_history WHERE isFavorite = 1 ORDER BY timestamp DESC")
+    fun getFavorites(): LiveData<List<Anime>>
+
+    @Query("SELECT * FROM anime_history WHERE id = :id")
+    suspend fun getAnimeById(id: String): Anime?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAnime(anime: Anime)
 

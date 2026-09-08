@@ -8,26 +8,22 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-sealed interface ExploreUiState {
-    object Idle : ExploreUiState
-    object Loading : ExploreUiState
-    data class Success(val results: List<Anime>) : ExploreUiState
-    data class Error(val message: String) : ExploreUiState
-}
+import com.example.projectjuansantiagoaby.domain.usecase.SearchAnimeUseCase
+import com.example.projectjuansantiagoaby.presentation.state.UiState
 
-class ExploreViewModel(private val repository: AnimeRepository) : ViewModel() {
-    private val _uiState = MutableStateFlow<ExploreUiState>(ExploreUiState.Idle)
+class ExploreViewModel(private val searchAnimeUseCase: SearchAnimeUseCase) : ViewModel() {
+    private val _uiState = MutableStateFlow<UiState<List<Anime>>>(UiState.Success(emptyList()))
     val uiState = _uiState.asStateFlow()
 
     fun search(query: String) {
         if (query.isBlank()) return
         viewModelScope.launch {
-            _uiState.value = ExploreUiState.Loading
+            _uiState.value = UiState.Loading
             try {
-                val results = repository.searchAnime(query)
-                _uiState.value = ExploreUiState.Success(results)
+                val results = searchAnimeUseCase(query)
+                _uiState.value = UiState.Success(results)
             } catch (e: Exception) {
-                _uiState.value = ExploreUiState.Error(e.message ?: "Error")
+                _uiState.value = UiState.Error(e.message ?: "Error al buscar")
             }
         }
     }

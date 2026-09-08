@@ -12,5 +12,6 @@ data class Anime(
     val lastEpisode: String? = null,
     val type: String? = null,
     val rating: String? = null,
+    val isFavorite: Boolean = false,
     val timestamp: Long = System.currentTimeMillis() // Para el historial
 )

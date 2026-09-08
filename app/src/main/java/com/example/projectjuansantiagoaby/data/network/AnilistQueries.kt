@@ -48,4 +48,28 @@ object AnilistQueries {
             }
         """.trimIndent()
     }
+
+    fun getLatestReleasesQuery(): String {
+        return """
+            query {
+              Page(page: 1, perPage: 20) {
+                media(sort: UPDATED_AT_DESC, type: ANIME, status: RELEASING) {
+                  id
+                  title {
+                    romaji
+                    english
+                  }
+                  coverImage {
+                    extraLarge
+                    large
+                  }
+                  description
+                  averageScore
+                  type
+                  episodes
+                }
+              }
+            }
+        """.trimIndent()
+    }
 }

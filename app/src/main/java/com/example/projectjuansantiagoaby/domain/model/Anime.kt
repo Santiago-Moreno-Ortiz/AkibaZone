@@ -9,6 +9,7 @@ data class Anime(
     val lastEpisode: String? = null,
     val rating: String? = null,
     val description: String? = null,
+    val isFavorite: Boolean = false,
     val genres: List<String> = emptyList()
 )
 

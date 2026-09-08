@@ -32,79 +32,52 @@ import com.example.projectjuansantiagoaby.ui.components.AnimeCard
 import com.example.projectjuansantiagoaby.ui.components.SectionTitle
 import com.example.projectjuansantiagoaby.ui.theme.*
 
+import com.example.projectjuansantiagoaby.domain.usecase.HomeData
+import com.example.projectjuansantiagoaby.presentation.state.UiState
+
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    onAnimeClick: (String) -> Unit,
-    onProfileClick: () -> Unit,
-    onSearchClick: () -> Unit
+    onAnimeClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        topBar = { AkibaZoneHeader(onSearchClick, onProfileClick) },
-        containerColor = Background
-    ) { padding ->
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Background
+    ) {
         when (val state = uiState) {
-            is HomeUiState.Loading -> LoadingState()
-            is HomeUiState.Error -> ErrorState(state.message) { viewModel.loadHomeData() }
-            is HomeUiState.Success -> HomeContent(state, padding, onAnimeClick)
+            is UiState.Loading -> LoadingState()
+            is UiState.Error -> ErrorState(state.message) { viewModel.loadHomeData() }
+            is UiState.Success -> HomeContent(state.data, onAnimeClick)
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AkibaZoneHeader(onSearchClick: () -> Unit, onProfileClick: () -> Unit) {
-    CenterAlignedTopAppBar(
-        title = {
-            Text(
-                "AkibaZone",
-                color = Primary,
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black)
-            )
-        },
-        actions = {
-            IconButton(onClick = onSearchClick) {
-                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = TextPrimary)
-            }
-            IconButton(onClick = onProfileClick) {
-                Icon(Icons.Default.Person, contentDescription = "Perfil", tint = TextPrimary)
-            }
-        },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Background
-        )
-    )
-}
-
 @Composable
 fun HomeContent(
-    state: HomeUiState.Success,
-    padding: PaddingValues,
+    data: HomeData,
     onAnimeClick: (String) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(padding)
+        modifier = Modifier.fillMaxSize()
     ) {
         // Hero Card (Featured Anime)
-        if (state.popularAnime.isNotEmpty()) {
+        if (data.popular.isNotEmpty()) {
             item {
-                HeroAnimeCard(anime = state.popularAnime.first(), onClick = { onAnimeClick(state.popularAnime.first().link) })
+                HeroAnimeCard(anime = data.popular.first(), onClick = { onAnimeClick(data.popular.first().link) })
             }
         }
 
         // Últimos Estrenos
-        if (state.latestReleases.isNotEmpty()) {
+        if (data.latest.isNotEmpty()) {
             item {
                 SectionTitle("Últimos Estrenos")
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.latestReleases) { anime ->
+                    items(data.latest) { anime ->
                         AnimeCard(anime = anime, onClick = { onAnimeClick(anime.link) })
                     }
                 }
@@ -112,14 +85,14 @@ fun HomeContent(
         }
 
         // Trending
-        if (state.trending.isNotEmpty()) {
+        if (data.trending.isNotEmpty()) {
             item {
                 SectionTitle("Tendencias")
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.trending) { anime ->
+                    items(data.trending) { anime ->
                         AnimeCard(anime = anime, onClick = { onAnimeClick(anime.link) })
                     }
                 }
@@ -131,7 +104,7 @@ fun HomeContent(
             SectionTitle("Recomendados para ti")
         }
         
-        items(state.popularAnime.drop(1).chunked(2)) { pair ->
+        items(data.popular.drop(1).chunked(2)) { pair ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

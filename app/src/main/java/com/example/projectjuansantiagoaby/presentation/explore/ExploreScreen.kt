@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.example.projectjuansantiagoaby.presentation.state.UiState
 import com.example.projectjuansantiagoaby.ui.components.AnimeCard
 import com.example.projectjuansantiagoaby.ui.theme.*
 
@@ -43,7 +44,7 @@ fun ExploreScreen(
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { query = "" }) {
-                        Icon(androidx.compose.material.icons.Icons.Default.Close, null, tint = TextSecondary)
+                        Icon(Icons.Default.Close, null, tint = TextSecondary)
                     }
                 }
             },
@@ -64,34 +65,12 @@ fun ExploreScreen(
         
         Spacer(Modifier.height(16.dp))
         
-        // Chips de géneros (Estaticos por ahora)
-        val genres = listOf("Todos", "Acción", "Aventura", "Romance", "Shonen")
-        var selectedGenre by remember { mutableStateOf("Todos") }
-        
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            genres.forEach { genre ->
-                FilterChip(
-                    selected = genre == selectedGenre,
-                    onClick = { selectedGenre = genre },
-                    label = { Text(genre) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Primary,
-                        selectedLabelColor = Color.White,
-                        containerColor = BackgroundSecondary,
-                        labelColor = TextSecondary
-                    )
-                )
-            }
-        }
-        
-        Spacer(Modifier.height(16.dp))
-        
         when (val state = uiState) {
-            is ExploreUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Primary) }
-            is ExploreUiState.Success -> {
-                if (state.results.isEmpty()) {
+            is UiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Primary) }
+            is UiState.Success -> {
+                if (state.data.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No se encontraron resultados", color = TextSecondary)
+                        Text("Busca tus animes favoritos", color = TextSecondary)
                     }
                 } else {
                     LazyVerticalGrid(
@@ -100,14 +79,13 @@ fun ExploreScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(state.results) { anime ->
+                        items(state.data) { anime ->
                             AnimeCard(anime, onClick = { onAnimeClick(anime.link) }, modifier = Modifier.fillMaxWidth())
                         }
                     }
                 }
             }
-            is ExploreUiState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(state.message, color = Error) }
-            is ExploreUiState.Idle -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Busca tus animes favoritos", color = TextSecondary) }
+            is UiState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(state.message, color = com.example.projectjuansantiagoaby.ui.theme.Error) }
         }
     }
 }

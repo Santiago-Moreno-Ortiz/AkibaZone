@@ -1,13 +1,13 @@
 package com.example.projectjuansantiagoaby.presentation.anime
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -25,14 +25,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.projectjuansantiagoaby.domain.model.AnimeDetail
-import com.example.projectjuansantiagoaby.ui.components.GenreChip
+import com.example.projectjuansantiagoaby.presentation.state.UiState
 import com.example.projectjuansantiagoaby.ui.theme.*
 
 @Composable
 fun AnimeDetailScreen(
     animeId: String,
     viewModel: AnimeDetailViewModel,
-    onBackClick: () -> Unit,
     onPlayClick: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -41,13 +40,14 @@ fun AnimeDetailScreen(
         viewModel.loadAnimeDetail(animeId)
     }
 
-    Scaffold(
-        containerColor = Background
-    ) { padding ->
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Background
+    ) {
         when (val state = uiState) {
-            is DetailUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Primary) }
-            is DetailUiState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(state.message, color = Error) }
-            is DetailUiState.Success -> DetailContent(state.detail, padding, onBackClick, onPlayClick)
+            is UiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Primary) }
+            is UiState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(state.message, color = com.example.projectjuansantiagoaby.ui.theme.Error) }
+            is UiState.Success -> DetailContent(state.data, onPlayClick, onFavoriteClick = { viewModel.toggleFavorite(state.data.anime) })
         }
     }
 }
@@ -55,9 +55,8 @@ fun AnimeDetailScreen(
 @Composable
 fun DetailContent(
     detail: AnimeDetail,
-    padding: PaddingValues,
-    onBackClick: () -> Unit,
-    onPlayClick: (String) -> Unit
+    onPlayClick: (String) -> Unit,
+    onFavoriteClick: () -> Unit
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
@@ -73,9 +72,6 @@ fun DetailContent(
                         Brush.verticalGradient(listOf(Color.Transparent, Background))
                     )
                 )
-                IconButton(onClick = onBackClick, modifier = Modifier.padding(16.dp).align(Alignment.TopStart).background(Color.Black.copy(0.4f), RoundedCornerShape(50))) {
-                    Icon(Icons.Default.ArrowBack, null, tint = Color.White)
-                }
             }
         }
 
@@ -87,7 +83,6 @@ fun DetailContent(
                 Spacer(Modifier.height(16.dp))
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val context = androidx.compose.ui.platform.LocalContext.current
                     Button(
                         onClick = { 
                             detail.episodes.firstOrNull()?.let { onPlayClick(it.id) }
@@ -99,10 +94,12 @@ fun DetailContent(
                         Text("Ver ahora")
                     }
                     Spacer(Modifier.width(16.dp))
-                    IconButton(onClick = { 
-                        android.widget.Toast.makeText(context, "Añadido a Favoritos", android.widget.Toast.LENGTH_SHORT).show()
-                    }) {
-                        Icon(Icons.Default.FavoriteBorder, null, tint = Favorite)
+                    IconButton(onClick = onFavoriteClick) {
+                        Icon(
+                            imageVector = if (detail.anime.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, 
+                            null, 
+                            tint = com.example.projectjuansantiagoaby.ui.theme.Favorite
+                        )
                     }
                 }
                 
@@ -120,7 +117,6 @@ fun DetailContent(
                 leadingContent = { Text(episode.number.padStart(2, '0'), color = Primary, fontWeight = FontWeight.Bold) },
                 modifier = Modifier
                     .background(Background)
-                    .clickable { onPlayClick(episode.id) }
                     .padding(horizontal = 8.dp),
                 colors = ListItemDefaults.colors(containerColor = Background)
             )

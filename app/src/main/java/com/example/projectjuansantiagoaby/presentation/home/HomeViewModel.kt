@@ -9,20 +9,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-sealed interface HomeUiState {
-    object Loading : HomeUiState
-    data class Success(
-        val popularAnime: List<Anime>,
-        val latestReleases: List<Anime>,
-        val trending: List<Anime>
-    ) : HomeUiState
-    data class Error(val message: String) : HomeUiState
-}
+import com.example.projectjuansantiagoaby.domain.usecase.GetHomeDataUseCase
+import com.example.projectjuansantiagoaby.domain.usecase.HomeData
+import com.example.projectjuansantiagoaby.presentation.state.UiState
 
-class HomeViewModel(private val repository: AnimeRepository) : ViewModel() {
+class HomeViewModel(private val getHomeDataUseCase: GetHomeDataUseCase) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<UiState<HomeData>>(UiState.Loading)
+    val uiState: StateFlow<UiState<HomeData>> = _uiState.asStateFlow()
 
     init {
         loadHomeData()
@@ -30,18 +24,12 @@ class HomeViewModel(private val repository: AnimeRepository) : ViewModel() {
 
     fun loadHomeData() {
         viewModelScope.launch {
-            _uiState.value = HomeUiState.Loading
+            _uiState.value = UiState.Loading
             try {
-                val popular = repository.getPopularAnime()
-                val latest = repository.getLatestReleases()
-                
-                _uiState.value = HomeUiState.Success(
-                    popularAnime = popular,
-                    latestReleases = latest,
-                    trending = popular.take(5)
-                )
+                val data = getHomeDataUseCase()
+                _uiState.value = UiState.Success(data)
             } catch (e: Exception) {
-                _uiState.value = HomeUiState.Error(e.message ?: "Error desconocido")
+                _uiState.value = UiState.Error(e.message ?: "Error al cargar datos")
             }
         }
     }

@@ -26,9 +26,20 @@ import com.example.projectjuansantiagoaby.presentation.home.HomeViewModel
 import com.example.projectjuansantiagoaby.ui.theme.AkibaZoneTheme
 import com.example.projectjuansantiagoaby.ui.theme.Background
 import com.example.projectjuansantiagoaby.ui.theme.Primary
+import com.example.projectjuansantiagoaby.ui.theme.TextPrimary
 import com.example.projectjuansantiagoaby.ui.theme.TextSecondary
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,9 +52,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainApp() {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+    val currentRoute = currentDestination?.route
+
     val items = listOf(
         Screen.Home,
         Screen.Explore,
@@ -52,36 +68,80 @@ fun MainApp() {
         Screen.Profile
     )
 
+    fun navigateTo(route: String) {
+        navController.navigate(route) {
+            // Popping up to the start destination of the graph to
+            // avoid building up a large stack of destinations
+            // on the back stack as users select items
+            popUpTo(navController.graph.findStartDestination().id) {
+                saveState = true
+            }
+            // Avoid multiple copies of the same destination when
+            // reselecting the same item
+            launchSingleTop = true
+            // Restore state when reselecting a previously selected item
+            restoreState = true
+        }
+    }
+
     Scaffold(
-        bottomBar = {
-            NavigationBar(
-                containerColor = Background,
-                contentColor = Primary
-            ) {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentDestination = navBackStackEntry?.destination
-                items.forEach { screen ->
-                    NavigationBarItem(
-                        icon = { Icon(screen.icon!!, contentDescription = null) },
-                        label = { Text(screen.title) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = Primary,
-                            selectedTextColor = Primary,
-                            unselectedIconColor = TextSecondary,
-                            unselectedTextColor = TextSecondary,
-                            indicatorColor = Background
-                        ),
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
+        topBar = {
+            if (currentRoute != Screen.Player.route) {
+                CenterAlignedTopAppBar(
+                    title = {
+                        Text(
+                            "AkibaZone",
+                            color = Primary,
+                            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Black),
+                            modifier = Modifier.clickable {
+                                navigateTo(Screen.Home.route)
+                            }
+                        )
+                    },
+                    navigationIcon = {
+                        if (currentRoute != Screen.Home.route && !items.any { it.route == currentRoute }) {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Atrás", tint = TextPrimary)
                             }
                         }
+                    },
+                    actions = {
+                        if (currentRoute == Screen.Home.route) {
+                            IconButton(onClick = { navigateTo(Screen.Explore.route) }) {
+                                Icon(Icons.Default.Search, contentDescription = "Buscar", tint = TextPrimary)
+                            }
+                        }
+                        IconButton(onClick = { navigateTo(Screen.Profile.route) }) {
+                            Icon(Icons.Default.Person, contentDescription = "Perfil", tint = TextPrimary)
+                        }
+                    },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Background
                     )
+                )
+            }
+        },
+        bottomBar = {
+            if (currentRoute != Screen.Player.route) {
+                NavigationBar(
+                    containerColor = Background,
+                    contentColor = Primary
+                ) {
+                    items.forEach { screen ->
+                        NavigationBarItem(
+                            icon = { Icon(screen.icon!!, contentDescription = null) },
+                            label = { Text(screen.title) },
+                            selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                            colors = NavigationBarItemDefaults.colors(
+                                selectedIconColor = Primary,
+                                selectedTextColor = Primary,
+                                unselectedIconColor = TextSecondary,
+                                unselectedTextColor = TextSecondary,
+                                indicatorColor = Background
+                            ),
+                            onClick = { navigateTo(screen.route) }
+                        )
+                    }
                 }
             }
         }
@@ -98,9 +158,7 @@ fun MainApp() {
                     onAnimeClick = { animeId -> 
                         val encodedId = URLEncoder.encode(animeId, StandardCharsets.UTF_8.toString())
                         navController.navigate(Screen.Detail.createRoute(encodedId)) 
-                    },
-                    onSearchClick = { navController.navigate(Screen.Explore.route) },
-                    onProfileClick = { navController.navigate(Screen.Profile.route) }
+                    }
                 )
             }
             composable(Screen.Explore.route) {
@@ -113,16 +171,27 @@ fun MainApp() {
                     }
                 )
             }
-            composable(Screen.Favorites.route) { PlaceholderScreen("Favoritos") }
+            composable(Screen.Favorites.route) {
+                val viewModel: com.example.projectjuansantiagoaby.presentation.favorites.FavoritesViewModel = viewModel(factory = MainViewModelFactory(androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application))
+                com.example.projectjuansantiagoaby.presentation.favorites.FavoritesScreen(
+                    viewModel = viewModel,
+                    onAnimeClick = { animeId -> 
+                        val encodedId = URLEncoder.encode(animeId, StandardCharsets.UTF_8.toString())
+                        navController.navigate(Screen.Detail.createRoute(encodedId)) 
+                    }
+                )
+            }
             composable(Screen.History.route) { PlaceholderScreen("Historial") }
-            composable(Screen.Profile.route) { PlaceholderScreen("Perfil") }
+            composable(Screen.Profile.route) {
+                val viewModel: com.example.projectjuansantiagoaby.presentation.profile.AuthViewModel = viewModel(factory = MainViewModelFactory(androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application))
+                com.example.projectjuansantiagoaby.presentation.profile.ProfileScreen(viewModel = viewModel)
+            }
             composable(Screen.Detail.route) { backStackEntry ->
                 val animeId = backStackEntry.arguments?.getString("animeId") ?: ""
                 val viewModel: AnimeDetailViewModel = viewModel(factory = MainViewModelFactory(androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application))
                 AnimeDetailScreen(
                     animeId = animeId,
                     viewModel = viewModel,
-                    onBackClick = { navController.popBackStack() },
                     onPlayClick = { episodeId -> 
                         val encodedEp = URLEncoder.encode(episodeId, StandardCharsets.UTF_8.toString())
                         navController.navigate(Screen.Player.createRoute(encodedEp)) 
