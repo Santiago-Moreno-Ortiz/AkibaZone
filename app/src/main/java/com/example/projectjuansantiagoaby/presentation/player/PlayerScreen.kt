@@ -1,10 +1,10 @@
 package com.example.projectjuansantiagoaby.presentation.player
 
-import android.view.ViewGroup
-import android.widget.FrameLayout
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -33,11 +33,11 @@ fun PlayerScreen(
         viewModel.loadVideo(episodeId)
     }
 
-    val exoPlayer = remember {
+    val exoPlayer = remember(context) {
         ExoPlayer.Builder(context).build()
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(exoPlayer) {
         onDispose {
             exoPlayer.release()
         }
@@ -48,23 +48,20 @@ fun PlayerScreen(
             is PlayerUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) { CircularProgressIndicator(color = com.example.projectjuansantiagoaby.ui.theme.Primary) }
             is PlayerUiState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) { Text(state.message, color = com.example.projectjuansantiagoaby.ui.theme.Error) }
             is PlayerUiState.Success -> {
-                LaunchedEffect(state.videoUrl) {
+                LaunchedEffect(state.videoUrl, exoPlayer) {
                     exoPlayer.setMediaItem(MediaItem.fromUri(state.videoUrl))
                     exoPlayer.prepare()
                     exoPlayer.playWhenReady = true
                 }
                 
                 AndroidView(
-                    factory = {
-                        PlayerView(context).apply {
-                            player = exoPlayer
-                            layoutParams = FrameLayout.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT
-                            )
-                        }
+                    factory = { playerContext ->
+                        PlayerView(playerContext)
                     },
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    update = { playerView ->
+                        playerView.player = exoPlayer
+                    }
                 )
             }
         }
