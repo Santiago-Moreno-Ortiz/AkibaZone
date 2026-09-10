@@ -29,7 +29,7 @@ class MainViewModelFactory(private val application: Application) : ViewModelProv
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(HomeViewModel::class.java) -> 
-                HomeViewModel(GetHomeDataUseCase(repository)) as T
+                HomeViewModel(GetHomeDataUseCase(repository), SearchAnimeUseCase(repository)) as T
             modelClass.isAssignableFrom(com.example.projectjuansantiagoaby.presentation.anime.AnimeDetailViewModel::class.java) -> 
                 com.example.projectjuansantiagoaby.presentation.anime.AnimeDetailViewModel(
                     GetAnimeDetailUseCase(repository),

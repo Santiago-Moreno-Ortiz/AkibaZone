@@ -158,6 +158,9 @@ fun MainApp() {
                     onAnimeClick = { animeId -> 
                         val encodedId = URLEncoder.encode(animeId, StandardCharsets.UTF_8.toString())
                         navController.navigate(Screen.Detail.createRoute(encodedId)) 
+                    },
+                    onExploreClick = {
+                        navigateTo(Screen.Explore.route)
                     }
                 )
             }

@@ -34,27 +34,51 @@ data class ServerDto(
     @SerializedName("code") val code: String?
 )
 
-// AniList DTOs
+// AniList GraphQL DTOs
+data class AnilistRequest(
+    @SerializedName("query") val query: String,
+    @SerializedName("variables") val variables: Map<String, Any?>? = null
+)
+
 data class AnilistResponse(
     @SerializedName("data") val data: AnilistData?
 )
 
 data class AnilistData(
-    @SerializedName("Page") val page: Page?
+    @SerializedName("Page") val page: Page?,
+    @SerializedName("Media") val media: Media?
 )
 
 data class Page(
+    @SerializedName("pageInfo") val pageInfo: PageInfo?,
     @SerializedName("media") val media: List<Media>?
+)
+
+data class PageInfo(
+    @SerializedName("total") val total: Int?,
+    @SerializedName("currentPage") val currentPage: Int?,
+    @SerializedName("lastPage") val lastPage: Int?,
+    @SerializedName("hasNextPage") val hasNextPage: Boolean?
 )
 
 data class Media(
     @SerializedName("id") val id: Int?,
     @SerializedName("title") val title: MediaTitle?,
     @SerializedName("coverImage") val coverImage: MediaCover?,
+    @SerializedName("bannerImage") val bannerImage: String?,
     @SerializedName("description") val description: String?,
     @SerializedName("averageScore") val averageScore: Int?,
+    @SerializedName("format") val format: String?,
     @SerializedName("type") val type: String?,
-    @SerializedName("episodes") val episodes: Int?
+    @SerializedName("status") val status: String?,
+    @SerializedName("episodes") val episodes: Int?,
+    @SerializedName("duration") val duration: Int?,
+    @SerializedName("season") val season: String?,
+    @SerializedName("seasonYear") val seasonYear: Int?,
+    @SerializedName("genres") val genres: List<String>?,
+    @SerializedName("studios") val studios: StudioConnection?,
+    @SerializedName("nextAiringEpisode") val nextAiringEpisode: AiringSchedule?,
+    @SerializedName("trailer") val trailer: MediaTrailer?
 )
 
 data class MediaTitle(
@@ -65,5 +89,24 @@ data class MediaTitle(
 
 data class MediaCover(
     @SerializedName("large") val large: String?,
-    @SerializedName("extraLarge") val extraLarge: String?
+    @SerializedName("extraLarge") val extraLarge: String?,
+    @SerializedName("color") val color: String?
+)
+
+data class StudioConnection(
+    @SerializedName("nodes") val nodes: List<StudioNode>?
+)
+
+data class StudioNode(
+    @SerializedName("name") val name: String?
+)
+
+data class AiringSchedule(
+    @SerializedName("episode") val episode: Int?,
+    @SerializedName("timeUntilAiring") val timeUntilAiring: Long?
+)
+
+data class MediaTrailer(
+    @SerializedName("id") val id: String?,
+    @SerializedName("site") val site: String?
 )
