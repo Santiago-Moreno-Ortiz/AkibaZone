@@ -73,7 +73,7 @@ dependencies {
     implementation(libs.gson)
     implementation(libs.jsoup)
     
-    // Media Playback
+    // Media Playback (Media3 es la versión actual de ExoPlayer)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
     implementation(libs.media3.hls)
