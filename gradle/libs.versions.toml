@@ -57,7 +57,6 @@ navigation-compose = { group = "androidx.navigation", name = "navigation-compose
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "icons" }
-navigation-safeargs-gradle-plugin = { group = "androidx.navigation", name = "navigation-safe-args-gradle-plugin", version.ref = "navigation" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 glide-compiler = { group = "com.github.bumptech.glide", name = "compiler", version.ref = "glide" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
@@ -66,7 +65,5 @@ material = { group = "com.google.android.material", name = "material", version.r
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlinCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-navigationSafeargs = { id = "androidx.navigation.safeargs.kotlin", version.ref = "navigation" }
 room = { id = "androidx.room", version.ref = "room" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-

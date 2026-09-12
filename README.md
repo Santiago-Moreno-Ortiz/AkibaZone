@@ -1,188 +1,110 @@
-# AkibaZone Mobile
+# AkibaZone
 
-## Descripción
-
-**AkibaZone Mobile** es una aplicación Android moderna y funcional para catálogo y streaming de anime, diseñada para ofrecer una experiencia premium de descubrimiento y reproducción de contenido anime. La aplicación permite a los usuarios explorar una amplia base de datos de anime, gestionar sus títulos favoritos y disfrutar de streaming de video mediante integración con APIs externas.
-
-La aplicación está construida siguiendo la arquitectura Clean Architecture con patrón MVVM, utilizando Jetpack Compose para la interfaz de usuario y Material Design 3 para el sistema de diseño visual.
-
-## Tecnologías
-
-- **Kotlin**: 100% del código en Kotlin, aprovechando características modernas del lenguaje
-- **Jetpack Compose**: Interfaz de usuario declarativa construida con Compose
-- **Material Design 3**: Sistema de diseño completo con tema oscuro AkibaZone
-- **MVVM**: Arquitectura Modelo-Vista-ViewModel con separación clara de responsabilidades
-- **Navigation Compose**: Navegación declarativa con NavController y NavHost
-- **Retrofit**: Consumo de APIs REST con endpoints definados y tipados
-- **Coroutines**: Programación asíncrona con Kotlin Coroutines
-- **StateFlow**: Estado reactivo para la capa de presentación
-- **Room**: Base de datos local para persistencia de historial y favoritos
-- **Coil**: Carga y caché de imágenes
-- **Gson**: Parsing de respuestas JSON de API
-- **Jsoup**: Web scraping para fuentes alternativas
-- **ExoPlayer**: Reproducción de video streaming HLS
-
-## Arquitectura
-
-La aplicación sigue un patrón estricto de separación de responsabilidades:
-
-```
-Compose Screen
-      ↓
-ViewModel
-      ↓
-Repository
-      ↓
-API Service (Retrofit / Jimo API / AnimeFLV Scraper)
-      ↓
-API REST (AniList GraphQL, Jimo REST)
-```
-
-### Capas:
-
-**MODEL:**
-- Modelos de datos y DTOs para consumo de API
-- Entidades Room para base de datos local
-- Casos de uso (Use Cases) con lógica de negocio pura
-
-**VIEW:**
-- Pantallas desarrolladas con Jetpack Compose
-- Componentes reutilizables (AnimeCard, LoadingView, ErrorView, etc.)
-- Estados visuales y diseño de interfaz
-- Sin lógica de negocio compleja
-
-**VIEWMODEL:**
-- Estado de cada pantalla mediante StateFlow
-- Lógica de presentación y coordinación
-- Llamadas a los repositorios
-- Gestión de Loading, Success y Error estados
-
-**REPOSITORY:**
-- Centraliza el acceso a los datos
-- Separa la UI de la implementación concreta de la API
-- Coordina entre API remota y base de datos local
+Proyecto académico desarrollado en Android Studio como parte de una actividad de desarrollo móvil. Su objetivo es aplicar conceptos fundamentales del desarrollo Android moderno mediante una aplicación de consulta de anime.
 
 ## Funcionalidades
 
-### HOME:
-- Banner o contenido destacado con anime en tendencia
-- Lista de animes organizados en secciones (Populares, Últimos Estrenos, Tendencias)
-- Cards visuales con imagen, título y calificación
-- Navegación a pantalla de detalle
+El código implementa:
 
-### CATÁLOGO:
-- Mostrar animes obtenidos desde API (AniList como fuente principal)
-- Cada tarjeta muestra: imagen, nombre, información básica
-- Búsqueda de animes por título o género
-- Navegación a pantalla de detalle al hacer clic
+- Inicio con secciones de catálogo, tendencias, títulos en emisión y mejor valorados.
+- Búsqueda por título y filtros por género, formato y orden.
+- Detalle con portada, sinopsis y metadatos disponibles.
+- Guardado y eliminación de favoritos en el dispositivo con Room.
+- Pantallas de carga, resultados y error, con reintento en inicio, búsqueda y detalle.
+- Registro e inicio de sesión de demostración, con usuarios guardados únicamente en memoria.
 
-### DETALLE:
-- Información completa del anime: imagen, nombre, sinopsis, géneros
-- Información adicional: año, estado, tipo
-- Botón de favoritos (agregar/eliminar de la lista personal)
-- Botón de reproducción que navega al reproductor
-- Recibe animeId mediante Navigation Compose arguments
+La consulta del catálogo depende de servicios externos. La reproducción es parcial: el reproductor existe, pero AniList no entrega enlaces de video. El historial, la configuración y las estadísticas de perfil están pendientes; no se presentan como funciones completas.
 
-### FAVORITOS:
-- Lista de animes favoritos guardados localmente
-- Poder agregar y eliminar favoritos
-- Sincronización con base de datos Room
-- Indicator visual de favorito
+## Tecnologías utilizadas
 
-### PERFIL:
-- Información básica del usuario
-- Estadísticas de visualización (animes vistos, episodios, horas)
-- Opciones: Configuración, Mi Historial, Mis Favoritos
-- Cerrar sesión
+- Kotlin, Jetpack Compose y Material Design 3.
+- MVVM, ViewModel, StateFlow y coroutines.
+- Navigation Compose con NavHost y NavController.
+- Retrofit y Gson para solicitudes HTTP y conversión de JSON.
+- Room para favoritos locales; LiveData para observar los datos guardados.
+- Coil para imágenes.
+- Jsoup para el scraper alternativo existente.
+- Media3 / ExoPlayer para el reproductor parcial.
+- Gradle y Git como herramientas de construcción y control de versiones; el repositorio puede clonarse desde GitHub.
 
-## API
+## Arquitectura
 
-La aplicación consume múltiples fuentes de datos:
+La organización sigue MVVM con una separación sencilla:
 
-**AniList API (Primary):**
-- GraphQL API en `https://graphql.anilist.co/`
-- Consulta para obtener animes populares, últimos lanzamientos y búsqueda
-- Datos confiables y actualizados sobre anime
+- **Model:** entidades locales, modelos, DTOs, servicios de red y `AnimeRepository`.
+- **View:** pantallas y componentes Compose que muestran el estado y reciben acciones.
+- **ViewModel:** carga datos mediante el repositorio o los casos de uso existentes y expone el estado a la interfaz.
 
-**Jimo API (Alternative):**
-- REST API en `https://jimov.herokuapp.com/`
-- Endpoints para filtrar, buscar y obtener información de anime
-- Fallback cuando Anilist no está disponible
+La carpeta `domain/usecase` contiene operaciones como cargar el inicio, buscar y alternar favoritos. `MainViewModelFactory` crea los ViewModels y sus dependencias manualmente. No se utiliza Hilt ni se pretende presentar una arquitectura empresarial.
 
-**AnimeFLV Scraper (Fallback):**
-- Web scraping de `https://www3.animeflv.net`
-- Obtiene información cuando las APIs principales fallan o no tienen el contenido
+## Consumo de API
 
-El consumo de red se realiza mediante funciones suspend y coroutines, nunca bloqueando el hilo principal.
+La fuente principal es [AniList GraphQL](https://docs.anilist.co/guide/graphql/), consultada mediante Retrofit en `https://graphql.anilist.co/`. Proporciona títulos, imágenes, sinopsis, géneros y otros metadatos. **Es GraphQL, no REST.**
+
+Como respaldo se utiliza [Jikan REST](https://docs.api.jikan.moe/), una API pública que no requiere API key. El repositorio consulta sus endpoints de catálogo, búsqueda y detalle cuando AniList no está disponible. La aplicación no incluye credenciales privadas.
+
+Existe un scraper de AnimeFLV como alternativa para algunas consultas. Depende de la estructura HTML externa y no garantiza resultados ni videos reproducibles. Los identificadores de esa fuente se mantienen separados de los numéricos de AniList.
+
+Las solicitudes se ejecutan con funciones `suspend` y coroutines. Se comprueban los errores GraphQL, que también pueden aparecer en una respuesta HTTP exitosa. AniList no proporciona streams: la aplicación no inventa episodios o URLs cuando faltan esos datos.
+
+**Validación del 11 de septiembre de 2026:** una consulta pública a AniList devolvió HTTP 403 y `data: null` con un error de deshabilitación temporal por problemas de estabilidad. En la misma revisión, Jikan respondió HTTP 200 para catálogo, búsqueda y detalle, por lo que queda como fallback operativo. La disponibilidad de servicios externos puede cambiar.
 
 ## Navegación
 
-La aplicación utiliza Navigation Compose con las siguientes rutas principales:
+`MainActivity` contiene un `NavHost`; el `NavController` gestiona las transiciones. Las rutas están definidas en `navigation/Screen.kt`:
 
-```
-Home
-  ├── Explorar (search)
-  ├── Catálogo (listado completo)
-  ├── DetalleAnime/{animeId}  (recibe argumento)
-  ├── Favoritos
-  └── Perfil (auth flow)
-```
+- `home`, `explore`, `favorites`, `history` y `profile`.
+- `detail/{animeId}` y `player/{episodeId}` para destinos con argumentos.
 
-### Rutas definidas en `Screen.kt`:
-- `home` - Pantalla principal
-- `explore` - Búsqueda y exploración
-- `detail/{animeId}` - Detalle del anime (recibe animeId por argumento)
-- `favorites` - Favoritos del usuario
-- `profile` - Perfil de usuario y auth
-- `player/{episodeId}` - Reproductor de video
+Los argumentos se codifican para admitir enlaces con caracteres especiales. La barra inferior conserva el estado de las pestañas. `history` muestra un aviso de función pendiente; `settings` está declarado, pero no tiene pantalla implementada.
 
-Los argumentos de navegación se pasan mediante `NavController.navigate()` con rutas con parámetros como `detail/{animeId}`.
+## Estructura del proyecto
 
-## Estados
-
-Cada pantalla que consume información de Internet maneja correctamente estos estados:
-
-**Loading:** Mostrar CircularProgressIndicator con color Primary. La pantalla muestra un indicador de carga animado mientras se obtienen los datos.
-
-**Success:** Mostrar los datos obtenidos. La UI reacciona mostrando el contenido correspondiente (lista de animes, detalle, perfil, etc.).
-
-**Error:** Mostrar mensaje amigable y opción para reintentar. Nunca deja la pantalla en blanco cuando una API falla. Los errores incluyen:
-- Sin internet
-- Error HTTP
-- Respuesta vacía
-- Error de parsing
-- API no disponible
-
-El patrón UiState sellado es:
-
-```kotlin
-sealed interface UiState<out T> {
-    data object Loading : UiState<Nothing>
-    data class Success<T>(val data: T) : UiState<T>
-    data class Error(val message: String) : UiState<Nothing>
-}
+```text
+app/src/main/java/com/example/akibazone/
+├── data/          # Room, modelos locales, red y repositorio
+├── domain/        # Modelos usados por las pantallas y casos de uso
+├── navigation/    # Rutas
+├── presentation/  # Pantallas, ViewModels y estados
+├── ui/            # Tema y componentes Compose
+└── MainActivity.kt
+app/src/main/res/  # Recursos Android activos
+app/src/test/      # Pruebas locales
+app/src/androidTest/ # Pruebas que requieren Android
+docs/legacy-xml/  # Recursos de la interfaz anterior, fuera de la compilación
 ```
 
-## Capturas
+El proyecto y el nombre visible son **AkibaZone**. El package, namespace y applicationId son `com.example.akibazone`, coherentes con el nombre actual del proyecto. Solo existe el módulo `app`.
 
-La aplicación incluye capturas de las principales pantallas:
-- HomeScreen con banner y categorías
-- ExploreScreen con resultados de búsqueda
-- AnimeDetailScreen con información completa
-- FavoritesScreen con lista de favoritos
-- ProfileScreen con autenticación y estadísticas
+Los XML anteriores se conservan en `docs/legacy-xml` como referencia: apuntaban a fragments inexistentes y no eran utilizados por `MainActivity`. No representan una segunda navegación activa.
 
-## Instalación
+## Ejecución
 
-1. Clonar el repositorio
-2. Abrir con **Android Studio Ladybug (o superior)**
-3. Sincronizar Gradle (`Project` -> `Sync Now`)
-4. Ejecutar en un emulador con API 24+ o dispositivo físico
-5. La aplicación requiere permisos de Internet y red
+1. Clonar este repositorio con Git y abrir su carpeta raíz en Android Studio.
+2. Usar una versión de Android Studio compatible con el Android Gradle Plugin declarado en `gradle/libs.versions.toml` (9.3.2).
+3. Instalar el SDK requerido por `compileSdk` y `targetSdk` (37). El dispositivo o emulador debe tener Android API 24 o superior.
+4. Sincronizar Gradle. El wrapper utiliza Gradle 9.5.0 y los criterios del daemon solicitan JDK 25. Revisar que `local.properties` apunte al SDK de la máquina; ese archivo no se comparte en Git.
+5. Seleccionar el módulo `app` y ejecutar en un emulador o dispositivo. El catálogo necesita conexión a Internet y disponibilidad de la API.
 
-## Autor
+Para validar desde terminal, configurar `JAVA_HOME` y ejecutar:
+
+```bash
+./gradlew clean assembleDebug
+./gradlew testDebugUnitTest lintDebug
+```
+
+El APK de depuración se genera en `app/build/outputs/apk/debug/app-debug.apk`. Las pruebas instrumentadas requieren un dispositivo o emulador conectado.
+
+En la revisión del 11 de septiembre de 2026 se ejecutó `clean` y la validación final de `assembleDebug`, `testDebugUnitTest` y `lintDebug` terminó correctamente: cinco pruebas locales aprobadas y Lint con cero errores y 30 advertencias. No había un dispositivo o emulador conectado, por lo que no se verificaron visualmente las pantallas ni se ejecutaron las pruebas instrumentadas.
+
+## Estado del proyecto
+
+Proyecto académico en desarrollo, preparado principalmente con fines educativos y de presentación.
+
+Los favoritos son locales y no están asociados a una cuenta remota. El acceso es una demostración en memoria: no persiste usuarios al cerrar el proceso ni autentica contra un servidor. El reproductor solo admite enlaces multimedia compatibles; la integración de streaming permanece parcial. No hay historial funcional, estadísticas calculadas ni pantalla de configuración.
+
+## Autores
 
 Desarrollado para la Sustentación Final de Aplicaciones Android.
 
----
-**AkibaZone Mobile** - Tu plataforma de anime en Android
+El README anterior no especificaba nombres de autores.

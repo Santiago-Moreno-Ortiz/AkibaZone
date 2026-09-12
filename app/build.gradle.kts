@@ -5,14 +5,13 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
-apply(plugin = "androidx.navigation.safeargs.kotlin")
 
 android {
-    namespace = "com.example.projectjuansantiagoaby"
+    namespace = "com.example.akibazone"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.example.projectjuansantiagoaby"
+        applicationId = "com.example.akibazone"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
@@ -25,8 +24,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt")
             )
         }
     }
@@ -36,7 +34,6 @@ android {
     }
     buildFeatures {
         compose = true
-        viewBinding = true
     }
 }
 
