@@ -1,0 +1,66 @@
+ .gitignore                                                                                                |   3 [32m+[m
+ README.md                                                                                                 | 222 [32m++++++++++++[m[31m-------------------------[m
+ app/build.gradle.kts                                                                                      |   9 [32m+[m[31m-[m
+ app/src/androidTest/java/com/example/{projectjuansantiagoaby => akibazone}/ExampleInstrumentedTest.kt     |   6 [32m+[m[31m-[m
+ app/src/main/AndroidManifest.xml                                                                          |   4 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/MainActivity.kt                       |  70 [32m++++++[m[31m------[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/local/AnimeDao.kt                |   4 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/local/AppDatabase.kt             |   4 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/model/Anime.kt                   |   2 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/model/AnimeDetail.kt             |   2 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/model/Episode.kt                 |   2 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/network/AnilistApiService.kt     |   6 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/network/AnilistQueries.kt        |  12 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/network/AnimeScraper.kt          |  30 [32m++[m[31m---[m
+ app/src/main/java/com/example/akibazone/data/network/JikanApiService.kt                                   |  28 [32m+++++[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/network/NetworkModule.kt         |  20 [32m++[m[31m--[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/data/network/dto/AnimeDto.kt          |  50 [32m++++++++[m[31m-[m
+ app/src/main/java/com/example/akibazone/data/repository/AnimeRepository.kt                                | 319 [32m+++++++++++++++++++++++++++++++++++++++++++++++++++++[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/domain/model/Anime.kt                 |   2 [32m+[m[31m-[m
+ app/src/main/java/com/example/akibazone/domain/usecase/GetAnimeDetailUseCase.kt                           |  10 [32m++[m
+ app/src/main/java/com/example/akibazone/domain/usecase/GetHomeDataUseCase.kt                              |  48 [32m++++++++[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/domain/usecase/SearchAnimeUseCase.kt  |   6 [32m+[m[31m-[m
+ app/src/main/java/com/example/akibazone/domain/usecase/ToggleFavoriteUseCase.kt                           |  10 [32m++[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/navigation/Screen.kt                  |   6 [32m+[m[31m-[m
+ app/src/main/java/com/example/akibazone/presentation/MainViewModelFactory.kt                              |  49 [32m++++++++[m
+ .../main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/anime/AnimeDetailScreen.kt   |  20 [32m++[m[31m--[m
+ .../java/com/example/{projectjuansantiagoaby => akibazone}/presentation/anime/AnimeDetailViewModel.kt     |  29 [32m+++[m[31m--[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/explore/ExploreScreen.kt |   8 [32m+[m[31m-[m
+ .../main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/explore/ExploreViewModel.kt  |  23 [32m++[m[31m--[m
+ .../main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/favorites/FavoritesScreen.kt |  16 [32m+[m[31m--[m
+ .../java/com/example/{projectjuansantiagoaby => akibazone}/presentation/favorites/FavoritesViewModel.kt   |  10 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/home/HomeScreen.kt       |  32 [32m+++[m[31m---[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/home/HomeViewModel.kt    |  33 [32m+++[m[31m---[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/player/PlayerScreen.kt   |  21 [32m+++[m[31m-[m
+ .../main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/player/PlayerViewModel.kt    |  11 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/profile/AuthViewModel.kt |   2 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/profile/ProfileScreen.kt |  37 [32m++++[m[31m---[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/presentation/state/UiState.kt         |   2 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/ui/components/CommonComponents.kt     |   6 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/ui/components/GenreChip.kt            |   6 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/ui/theme/Color.kt                     |   2 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/ui/theme/Theme.kt                     |   2 [32m+[m[31m-[m
+ app/src/main/java/com/example/{projectjuansantiagoaby => akibazone}/ui/theme/Type.kt                      |   2 [32m+[m[31m-[m
+ app/src/main/java/com/example/projectjuansantiagoaby/data/network/JimoApiService.kt                       |  32 [31m------[m
+ app/src/main/java/com/example/projectjuansantiagoaby/data/repository/AnimeRepository.kt                   | 195 [31m--------------------------------[m
+ app/src/main/java/com/example/projectjuansantiagoaby/domain/usecase/GetAnimeDetailUseCase.kt              |  10 [31m--[m
+ app/src/main/java/com/example/projectjuansantiagoaby/domain/usecase/GetHomeDataUseCase.kt                 |  35 [31m------[m
+ app/src/main/java/com/example/projectjuansantiagoaby/domain/usecase/ToggleFavoriteUseCase.kt              |  10 [31m--[m
+ app/src/main/java/com/example/projectjuansantiagoaby/presentation/MainViewModelFactory.kt                 |  49 [31m--------[m
+ app/src/main/res/values/strings.xml                                                                       |   2 [32m+[m[31m-[m
+ app/src/main/res/values/themes.xml                                                                        |   2 [32m+[m[31m-[m
+ app/src/test/java/com/example/akibazone/AnimeDataTest.kt                                                  |  50 [32m+++++++++[m
+ app/src/test/java/com/example/{projectjuansantiagoaby => akibazone}/ExampleUnitTest.kt                    |   4 [32m+[m[31m-[m
+ build.gradle.kts                                                                                          |   9 [31m--[m
+ {app/src/main/res => docs/legacy-xml}/layout/activity_main.xml                                            |   0
+ {app/src/main/res => docs/legacy-xml}/layout/fragment_detail.xml                                          |   0
+ {app/src/main/res => docs/legacy-xml}/layout/fragment_home.xml                                            |   0
+ {app/src/main/res => docs/legacy-xml}/layout/fragment_login.xml                                           |   0
+ {app/src/main/res => docs/legacy-xml}/layout/fragment_player.xml                                          |   0
+ {app/src/main/res => docs/legacy-xml}/layout/item_anime.xml                                               |   0
+ {app/src/main/res => docs/legacy-xml}/layout/item_episode.xml                                             |   0
+ {app/src/main/res => docs/legacy-xml}/menu/main_menu.xml                                                  |   0
+ {app/src/main/res => docs/legacy-xml}/navigation/nav_graph.xml                                            |   8 [32m+[m[31m-[m
+ gradle/libs.versions.toml                                                                                 |   3 [31m-[m
+ settings.gradle.kts                                                                                       |   2 [32m+[m[31m-[m
+ 65 files changed, 886 insertions(+), 711 deletions(-)
