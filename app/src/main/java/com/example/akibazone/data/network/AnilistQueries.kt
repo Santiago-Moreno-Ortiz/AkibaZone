@@ -15,7 +15,7 @@ object AnilistQueries {
           color
         }
         bannerImage
-        description
+        description(asHtml: false)
         averageScore
         format
         type

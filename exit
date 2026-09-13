@@ -1,0 +1,295 @@
+[1mdiff --git a/.idea/deploymentTargetSelector.xml b/.idea/deploymentTargetSelector.xml[m
+[1mindex bda63c5..39f173d 100644[m
+[1m--- a/.idea/deploymentTargetSelector.xml[m
+[1m+++ b/.idea/deploymentTargetSelector.xml[m
+[36m@@ -4,7 +4,7 @@[m
+     <selectionStates>[m
+       <SelectionState runConfigName="app">[m
+         <option name="selectionMode" value="DROPDOWN" />[m
+[31m-        <DropdownSelection timestamp="2026-09-12T17:42:36.159237455Z">[m
+[32m+[m[32m        <DropdownSelection timestamp="2026-09-12T18:53:42.642461374Z">[m
+           <Target type="DEFAULT_BOOT">[m
+             <handle>[m
+               <DeviceId pluginId="PhysicalDevice" identifier="serial=986061ce" />[m
+[1mdiff --git a/app/src/main/java/com/example/akibazone/data/network/AnilistQueries.kt b/app/src/main/java/com/example/akibazone/data/network/AnilistQueries.kt[m
+[1mindex db5a438..6e3899a 100644[m
+[1m--- a/app/src/main/java/com/example/akibazone/data/network/AnilistQueries.kt[m
+[1m+++ b/app/src/main/java/com/example/akibazone/data/network/AnilistQueries.kt[m
+[36m@@ -15,7 +15,7 @@[m [mobject AnilistQueries {[m
+           color[m
+         }[m
+         bannerImage[m
+[31m-        description[m
+[32m+[m[32m        description(asHtml: false)[m
+         averageScore[m
+         format[m
+         type[m
+[1mdiff --git a/app/src/main/java/com/example/akibazone/data/repository/AnimeRepository.kt b/app/src/main/java/com/example/akibazone/data/repository/AnimeRepository.kt[m
+[1mindex de2efad..910085c 100644[m
+[1m--- a/app/src/main/java/com/example/akibazone/data/repository/AnimeRepository.kt[m
+[1m+++ b/app/src/main/java/com/example/akibazone/data/repository/AnimeRepository.kt[m
+[36m@@ -2,6 +2,7 @@[m [mpackage com.example.akibazone.data.repository[m
+ [m
+ import android.util.Log[m
+ import com.example.akibazone.data.local.AnimeDao[m
+[32m+[m[32mimport com.example.akibazone.data.mapper.SynopsisNormalizer[m
+ import com.example.akibazone.domain.model.Anime[m
+ import com.example.akibazone.domain.model.AnimeDetail[m
+ import com.example.akibazone.domain.model.Episode[m
+[36m@@ -45,7 +46,7 @@[m [mclass AnimeRepository([m
+             link = id,[m
+             type = type,[m
+             rating = score?.toString() ?: "0.0",[m
+[31m-            description = synopsis,[m
+[32m+[m[32m            description = SynopsisNormalizer.firstAvailable(synopsis),[m
+             genres = genres.mapNotNull { it.name },[m
+             status = status,[m
+             year = year?.toString(),[m
+[36m@@ -128,7 +129,7 @@[m [mclass AnimeRepository([m
+             link = this.id?.toString() ?: "",[m
+             type = this.format ?: this.type,[m
+             rating = (this.averageScore?.toFloat()?.div(10f))?.toString() ?: "0.0",[m
+[31m-            description = this.description,[m
+[32m+[m[32m            description = SynopsisNormalizer.firstAvailable(this.description),[m
+             genres = this.genres ?: emptyList(),[m
+             status = this.status,[m
+             year = this.seasonYear?.toString(),[m
+[36m@@ -271,7 +272,7 @@[m [mclass AnimeRepository([m
+         scraper.getAnimeDetail(animeId)?.let { detail ->[m
+             AnimeDetail([m
+                 anime = detail.anime.toDomain().copy([m
+[31m-                    description = detail.synopsis,[m
+[32m+[m[32m                    description = SynopsisNormalizer.firstAvailable(detail.synopsis),[m
+                     genres = detail.genres,[m
+                     isFavorite = animeDao.getAnimeById(detail.anime.id)?.isFavorite ?: false[m
+                 ),[m
+[1mdiff --git a/app/src/main/java/com/example/akibazone/presentation/anime/AnimeDetailScreen.kt b/app/src/main/java/com/example/akibazone/presentation/anime/AnimeDetailScreen.kt[m
+[1mindex a37a0d3..4c040fb 100644[m
+[1m--- a/app/src/main/java/com/example/akibazone/presentation/anime/AnimeDetailScreen.kt[m
+[1m+++ b/app/src/main/java/com/example/akibazone/presentation/anime/AnimeDetailScreen.kt[m
+[36m@@ -198,7 +198,7 @@[m [mfun DetailContent([m
+                 Text("Sinopsis", style = MaterialTheme.typography.titleMedium, color = TextPrimary)[m
+                 Spacer(Modifier.height(6.dp))[m
+                 Text([m
+[31m-                    text = detail.anime.description?.replace(Regex("<[^>]*>"), "") ?: "Sin descripción disponible.",[m
+[32m+[m[32m                    text = detail.anime.description ?: "Sin descripción disponible.",[m
+                     color = TextSecondary,[m
+                     style = MaterialTheme.typography.bodyMedium,[m
+                     lineHeight = 20.sp[m
+[1mdiff --git a/app/src/main/java/com/example/akibazone/presentation/home/HomeScreen.kt b/app/src/main/java/com/example/akibazone/presentation/home/HomeScreen.kt[m
+[1mindex f387ecb..75329a7 100644[m
+[1m--- a/app/src/main/java/com/example/akibazone/presentation/home/HomeScreen.kt[m
+[1m+++ b/app/src/main/java/com/example/akibazone/presentation/home/HomeScreen.kt[m
+[36m@@ -100,7 +100,7 @@[m [mfun HomeContent([m
+         // Tendencias (Trending)[m
+         if (data.trending.isNotEmpty()) {[m
+             item {[m
+[31m-                SectionTitle("🔥 Tendencias del Momento")[m
+[32m+[m[32m                SectionTitle("Tendencias del Momento")[m
+                 LazyRow([m
+                     contentPadding = PaddingValues(horizontal = 8.dp),[m
+                     horizontalArrangement = Arrangement.spacedBy(8.dp)[m
+[36m@@ -122,7 +122,7 @@[m [mfun HomeContent([m
+                 verticalAlignment = Alignment.CenterVertically[m
+             ) {[m
+                 Text([m
+[31m-                    text = "📚 Catálogo de Anime",[m
+[32m+[m[32m                    text = "Catálogo de Anime",[m
+                     style = MaterialTheme.typography.headlineMedium,[m
+                     color = TextPrimary[m
+                 )[m
+[36m@@ -203,7 +203,7 @@[m [mfun HomeContent([m
+         // Últimos Estrenos[m
+         if (data.latest.isNotEmpty()) {[m
+             item {[m
+[31m-                SectionTitle("🆕 En Emisión / Últimos Estrenos")[m
+[32m+[m[32m                SectionTitle("En Emisión / Últimos Estrenos")[m
+                 LazyRow([m
+                     contentPadding = PaddingValues(horizontal = 8.dp),[m
+                     horizontalArrangement = Arrangement.spacedBy(8.dp)[m
+[36m@@ -218,7 +218,7 @@[m [mfun HomeContent([m
+         // Mejor Valorados[m
+         if (data.topRated.isNotEmpty()) {[m
+             item {[m
+[31m-                SectionTitle("⭐ Mejor Valorados")[m
+[32m+[m[32m                SectionTitle("Mejor Valorados")[m
+                 LazyRow([m
+                     contentPadding = PaddingValues(horizontal = 8.dp),[m
+                     horizontalArrangement = Arrangement.spacedBy(8.dp)[m
+[36m@@ -233,7 +233,7 @@[m [mfun HomeContent([m
+         // Recomendados (Populares)[m
+         if (data.popular.isNotEmpty()) {[m
+             item {[m
+[31m-                SectionTitle("💡 Recomendados para ti")[m
+[32m+[m[32m                SectionTitle("Recomendados para ti")[m
+             }[m
+ [m
+             items(data.popular.chunked(2)) { pair ->[m
+[1mdiff --git a/app/src/main/java/com/example/akibazone/presentation/player/PlayerScreen.kt b/app/src/main/java/com/example/akibazone/presentation/player/PlayerScreen.kt[m
+[1mindex 1bf5f85..b27aebe 100644[m
+[1m--- a/app/src/main/java/com/example/akibazone/presentation/player/PlayerScreen.kt[m
+[1m+++ b/app/src/main/java/com/example/akibazone/presentation/player/PlayerScreen.kt[m
+[36m@@ -7,17 +7,33 @@[m [mimport androidx.compose.foundation.layout.fillMaxSize[m
+ import androidx.compose.foundation.layout.padding[m
+ import androidx.compose.material.icons.Icons[m
+ import androidx.compose.material.icons.filled.ArrowBack[m
+[31m-import androidx.compose.material3.*[m
+[31m-import androidx.compose.runtime.*[m
+[32m+[m[32mimport androidx.compose.material3.CircularProgressIndicator[m
+[32m+[m[32mimport androidx.compose.material3.Icon[m
+[32m+[m[32mimport androidx.compose.material3.IconButton[m
+[32m+[m[32mimport androidx.compose.material3.Text[m
+[32m+[m[32mimport androidx.compose.runtime.Composable[m
+[32m+[m[32mimport androidx.compose.runtime.DisposableEffect[m
+[32m+[m[32mimport androidx.compose.runtime.LaunchedEffect[m
+[32m+[m[32mimport androidx.compose.runtime.collectAsState[m
+[32m+[m[32mimport androidx.compose.runtime.getValue[m
+[32m+[m[32mimport androidx.compose.runtime.remember[m
+[32m+[m[32mimport androidx.compose.ui.Alignment[m
+ import androidx.compose.ui.Modifier[m
+ import androidx.compose.ui.graphics.Color[m
+ import androidx.compose.ui.platform.LocalContext[m
+ import androidx.compose.ui.unit.dp[m
+ import androidx.compose.ui.viewinterop.AndroidView[m
+[32m+[m[32mimport androidx.lifecycle.Lifecycle[m
+[32m+[m[32mimport androidx.lifecycle.LifecycleEventObserver[m
+[32m+[m[32mimport androidx.lifecycle.compose.LocalLifecycleOwner[m
+ import androidx.media3.common.MediaItem[m
+[32m+[m[32mimport androidx.media3.common.PlaybackException[m
+[32m+[m[32mimport androidx.media3.common.Player[m
+ import androidx.media3.common.util.UnstableApi[m
+ import androidx.media3.exoplayer.ExoPlayer[m
+ import androidx.media3.ui.PlayerView[m
+[32m+[m[32mimport com.example.akibazone.ui.theme.Error[m
+[32m+[m[32mimport com.example.akibazone.ui.theme.Primary[m
+ [m
+ @OptIn(UnstableApi::class)[m
+ @Composable[m
+[36m@@ -27,6 +43,8 @@[m [mfun PlayerScreen([m
+     onBackClick: () -> Unit[m
+ ) {[m
+     val context = LocalContext.current[m
+[32m+[m[32m    val lifecycleOwner = LocalLifecycleOwner.current[m
+[32m+[m
+     val uiState by viewModel.uiState.collectAsState()[m
+ [m
+     LaunchedEffect(episodeId) {[m
+[36m@@ -37,22 +55,27 @@[m [mfun PlayerScreen([m
+         ExoPlayer.Builder(context).build()[m
+     }[m
+ [m
+[31m-<<<<<<< HEAD:app/src/main/java/com/example/projectjuansantiagoaby/presentation/player/PlayerScreen.kt[m
+[31m-    DisposableEffect(exoPlayer) {[m
+[31m-=======[m
+[31m-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current[m
+     DisposableEffect(exoPlayer, lifecycleOwner) {[m
+[31m-        val listener = object : androidx.media3.common.Player.Listener {[m
+[31m-            override fun onPlayerError(error: androidx.media3.common.PlaybackException) {[m
+[32m+[m
+[32m+[m[32m        val listener = object : Player.Listener {[m
+[32m+[m[32m            override fun onPlayerError(error: PlaybackException) {[m
+                 viewModel.onPlaybackError()[m
+             }[m
+         }[m
+[31m-        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->[m
+[31m-            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) exoPlayer.pause()[m
+[32m+[m
+[32m+[m[32m        val observer = LifecycleEventObserver { _, event ->[m
+[32m+[m[32m            when (event) {[m
+[32m+[m[32m                Lifecycle.Event.ON_STOP -> {[m
+[32m+[m[32m                    exoPlayer.pause()[m
+[32m+[m[32m                }[m
+[32m+[m
+[32m+[m[32m                else -> Unit[m
+[32m+[m[32m            }[m
+         }[m
+[32m+[m
+         exoPlayer.addListener(listener)[m
+         lifecycleOwner.lifecycle.addObserver(observer)[m
+[31m->>>>>>> 4e94ed7 (fix: unificar package y estabilizar consumo de API):app/src/main/java/com/example/akibazone/presentation/player/PlayerScreen.kt[m
+[32m+[m
+         onDispose {[m
+             lifecycleOwner.lifecycle.removeObserver(observer)[m
+             exoPlayer.removeListener(listener)[m
+[36m@@ -60,20 +83,53 @@[m [mfun PlayerScreen([m
+         }[m
+     }[m
+ [m
+[31m-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {[m
+[32m+[m[32m    Box([m
+[32m+[m[32m        modifier = Modifier[m
+[32m+[m[32m            .fillMaxSize()[m
+[32m+[m[32m            .background(Color.Black)[m
+[32m+[m[32m    ) {[m
+[32m+[m
+         when (val state = uiState) {[m
+[31m-            is PlayerUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) { CircularProgressIndicator(color = com.example.akibazone.ui.theme.Primary) }[m
+[31m-            is PlayerUiState.Error -> Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) { Text(state.message, color = com.example.akibazone.ui.theme.Error) }[m
+[32m+[m
+[32m+[m[32m            is PlayerUiState.Loading -> {[m
+[32m+[m[32m                Box([m
+[32m+[m[32m                    modifier = Modifier.fillMaxSize(),[m
+[32m+[m[32m                    contentAlignment = Alignment.Center[m
+[32m+[m[32m                ) {[m
+[32m+[m[32m                    CircularProgressIndicator([m
+[32m+[m[32m                        color = Primary[m
+[32m+[m[32m                    )[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m
+[32m+[m[32m            is PlayerUiState.Error -> {[m
+[32m+[m[32m                Box([m
+[32m+[m[32m                    modifier = Modifier.fillMaxSize(),[m
+[32m+[m[32m                    contentAlignment = Alignment.Center[m
+[32m+[m[32m                ) {[m
+[32m+[m[32m                    Text([m
+[32m+[m[32m                        text = state.message,[m
+[32m+[m[32m                        color = Error[m
+[32m+[m[32m                    )[m
+[32m+[m[32m                }[m
+[32m+[m[32m            }[m
+[32m+[m
+             is PlayerUiState.Success -> {[m
+[32m+[m
+                 LaunchedEffect(state.videoUrl, exoPlayer) {[m
+[31m-                    exoPlayer.setMediaItem(MediaItem.fromUri(state.videoUrl))[m
+[32m+[m[32m                    exoPlayer.setMediaItem([m
+[32m+[m[32m                        MediaItem.fromUri(state.videoUrl)[m
+[32m+[m[32m                    )[m
+[32m+[m
+                     exoPlayer.prepare()[m
+                     exoPlayer.playWhenReady = true[m
+                 }[m
+[31m-                [m
+[32m+[m
+                 AndroidView([m
+                     factory = { playerContext ->[m
+[31m-                        PlayerView(playerContext)[m
+[32m+[m[32m                        PlayerView(playerContext).apply {[m
+[32m+[m[32m                            player = exoPlayer[m
+[32m+[m[32m                        }[m
+                     },[m
+                     modifier = Modifier.fillMaxSize(),[m
+                     update = { playerView ->[m
+[36m@@ -82,9 +138,16 @@[m [mfun PlayerScreen([m
+                 )[m
+             }[m
+         }[m
+[31m-        [m
+[31m-        IconButton(onClick = onBackClick, modifier = Modifier.padding(16.dp)) {[m
+[31m-            Icon(Icons.Default.ArrowBack, null, tint = Color.White)[m
+[32m+[m
+[32m+[m[32m        IconButton([m
+[32m+[m[32m            onClick = onBackClick,[m
+[32m+[m[32m            modifier = Modifier.padding(16.dp)[m
+[32m+[m[32m        ) {[m
+[32m+[m[32m            Icon([m
+[32m+[m[32m                imageVector = Icons.Default.ArrowBack,[m
+[32m+[m[32m                contentDescription = "Volver",[m
+[32m+[m[32m                tint = Color.White[m
+[32m+[m[32m            )[m
+         }[m
+     }[m
+[31m-}[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
