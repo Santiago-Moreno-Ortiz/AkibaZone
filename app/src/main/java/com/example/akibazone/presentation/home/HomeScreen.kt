@@ -100,7 +100,7 @@ fun HomeContent(
         // Tendencias (Trending)
         if (data.trending.isNotEmpty()) {
             item {
-                SectionTitle("🔥 Tendencias del Momento")
+                SectionTitle("Tendencias del Momento")
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -122,7 +122,7 @@ fun HomeContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "📚 Catálogo de Anime",
+                    text = "Catálogo de Anime",
                     style = MaterialTheme.typography.headlineMedium,
                     color = TextPrimary
                 )
@@ -203,7 +203,7 @@ fun HomeContent(
         // Últimos Estrenos
         if (data.latest.isNotEmpty()) {
             item {
-                SectionTitle("🆕 En Emisión / Últimos Estrenos")
+                SectionTitle("En Emisión / Últimos Estrenos")
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -218,7 +218,7 @@ fun HomeContent(
         // Mejor Valorados
         if (data.topRated.isNotEmpty()) {
             item {
-                SectionTitle("⭐ Mejor Valorados")
+                SectionTitle("Mejor Valorados")
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -233,7 +233,7 @@ fun HomeContent(
         // Recomendados (Populares)
         if (data.popular.isNotEmpty()) {
             item {
-                SectionTitle("💡 Recomendados para ti")
+                SectionTitle("Recomendados para ti")
             }
 
             items(data.popular.chunked(2)) { pair ->

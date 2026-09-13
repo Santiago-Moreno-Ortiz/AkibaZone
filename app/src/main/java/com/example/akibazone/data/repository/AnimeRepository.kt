@@ -2,6 +2,7 @@ package com.example.akibazone.data.repository
 
 import android.util.Log
 import com.example.akibazone.data.local.AnimeDao
+import com.example.akibazone.data.mapper.SynopsisNormalizer
 import com.example.akibazone.domain.model.Anime
 import com.example.akibazone.domain.model.AnimeDetail
 import com.example.akibazone.domain.model.Episode
@@ -45,7 +46,7 @@ class AnimeRepository(
             link = id,
             type = type,
             rating = score?.toString() ?: "0.0",
-            description = synopsis,
+            description = SynopsisNormalizer.firstAvailable(synopsis),
             genres = genres.mapNotNull { it.name },
             status = status,
             year = year?.toString(),
@@ -128,7 +129,7 @@ class AnimeRepository(
             link = this.id?.toString() ?: "",
             type = this.format ?: this.type,
             rating = (this.averageScore?.toFloat()?.div(10f))?.toString() ?: "0.0",
-            description = this.description,
+            description = SynopsisNormalizer.firstAvailable(this.description),
             genres = this.genres ?: emptyList(),
             status = this.status,
             year = this.seasonYear?.toString(),
@@ -271,7 +272,7 @@ class AnimeRepository(
         scraper.getAnimeDetail(animeId)?.let { detail ->
             AnimeDetail(
                 anime = detail.anime.toDomain().copy(
-                    description = detail.synopsis,
+                    description = SynopsisNormalizer.firstAvailable(detail.synopsis),
                     genres = detail.genres,
                     isFavorite = animeDao.getAnimeById(detail.anime.id)?.isFavorite ?: false
                 ),

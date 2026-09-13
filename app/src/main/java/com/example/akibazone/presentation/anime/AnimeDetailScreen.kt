@@ -198,7 +198,7 @@ fun DetailContent(
                 Text("Sinopsis", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = detail.anime.description?.replace(Regex("<[^>]*>"), "") ?: "Sin descripción disponible.",
+                    text = detail.anime.description ?: "Sin descripción disponible.",
                     color = TextSecondary,
                     style = MaterialTheme.typography.bodyMedium,
                     lineHeight = 20.sp
