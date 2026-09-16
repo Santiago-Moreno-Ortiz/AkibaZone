@@ -25,6 +25,7 @@ import com.example.akibazone.presentation.home.HomeScreen
 import com.example.akibazone.presentation.home.HomeViewModel
 import com.example.akibazone.presentation.history.HistoryScreen
 import com.example.akibazone.presentation.history.HistoryViewModel
+import com.example.akibazone.presentation.profile.ProfileViewModel
 import com.example.akibazone.ui.theme.AkibaZoneTheme
 import com.example.akibazone.ui.theme.Background
 import com.example.akibazone.ui.theme.Primary
@@ -195,9 +196,12 @@ fun MainApp() {
                 )
             }
             composable(Screen.Profile.route) {
-                val viewModel: com.example.akibazone.presentation.profile.AuthViewModel = viewModel(factory = MainViewModelFactory(androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application))
+                val application = androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application
+                val viewModel: com.example.akibazone.presentation.profile.AuthViewModel = viewModel(factory = MainViewModelFactory(application))
+                val profileViewModel: ProfileViewModel = viewModel(factory = MainViewModelFactory(application))
                 com.example.akibazone.presentation.profile.ProfileScreen(
                     viewModel = viewModel,
+                    profileViewModel = profileViewModel,
                     onFavoritesClick = { navigateTo(Screen.Favorites.route) },
                     onHistoryClick = { navigateTo(Screen.History.route) }
                 )

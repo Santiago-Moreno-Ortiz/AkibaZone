@@ -20,15 +20,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.akibazone.presentation.state.UiState
 import com.example.akibazone.ui.theme.*
 
 @Composable
 fun ProfileScreen(
     viewModel: AuthViewModel,
+    profileViewModel: ProfileViewModel,
     onFavoritesClick: () -> Unit,
     onHistoryClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val statsState by profileViewModel.statsState.collectAsState()
     var isRegisterMode by remember { mutableStateOf(false) }
 
     Box(
@@ -50,6 +53,7 @@ fun ProfileScreen(
                 ProfileContent(
                     userName = state.userName,
                     email = state.email,
+                    statsState = statsState,
                     onLogout = viewModel::logout,
                     onFavoritesClick = onFavoritesClick,
                     onHistoryClick = onHistoryClick
@@ -194,6 +198,7 @@ fun LoginContent(
 fun ProfileContent(
     userName: String,
     email: String,
+    statsState: UiState<ProfileStats>,
     onLogout: () -> Unit,
     onFavoritesClick: () -> Unit,
     onHistoryClick: () -> Unit
@@ -240,20 +245,29 @@ fun ProfileContent(
         Spacer(modifier = Modifier.height(40.dp))
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            StatCard(label = "Animes vistos", value = "—", modifier = Modifier.weight(1f))
-            StatCard(label = "Episodios", value = "—", modifier = Modifier.weight(1f))
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            StatCard(label = "Horas vistas", value = "—", modifier = Modifier.weight(1f))
-            StatCard(label = "Favoritos", value = "—", modifier = Modifier.weight(1f))
+            StatCard(
+                label = "Favoritos",
+                value = statsState.valueFor { it.favoriteCount },
+                modifier = Modifier.weight(1f)
+            )
+            StatCard(
+                label = "Historial",
+                value = statsState.valueFor { it.historyCount },
+                modifier = Modifier.weight(1f)
+            )
         }
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        Text("Estadísticas y configuración pendientes de implementar", color = TextSecondary)
+        if (statsState is UiState.Error) {
+            Text(
+                text = statsState.message,
+                color = Error,
+                style = MaterialTheme.typography.bodySmall
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
         ProfileMenuItem(icon = Icons.Default.Settings, label = "Configuración (pendiente)")
         ProfileMenuItem(icon = Icons.Default.History, label = "Mi Historial", onClick = onHistoryClick)
         ProfileMenuItem(icon = Icons.Default.Favorite, label = "Mis Favoritos", onClick = onFavoritesClick)
@@ -270,6 +284,9 @@ fun ProfileContent(
         }
     }
 }
+
+private fun UiState<ProfileStats>.valueFor(selector: (ProfileStats) -> Int): String =
+    (this as? UiState.Success)?.data?.let { selector(it).toString() } ?: "—"
 
 @Composable
 fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {

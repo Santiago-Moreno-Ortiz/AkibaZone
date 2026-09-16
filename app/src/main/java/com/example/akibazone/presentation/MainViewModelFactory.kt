@@ -8,6 +8,7 @@ import com.example.akibazone.data.network.AnimeScraper
 import com.example.akibazone.data.network.NetworkModule
 import com.example.akibazone.data.repository.AnimeRepository
 import com.example.akibazone.presentation.home.HomeViewModel
+import com.example.akibazone.presentation.profile.ProfileViewModel
 
 import com.example.akibazone.domain.usecase.GetAnimeDetailUseCase
 import com.example.akibazone.domain.usecase.GetHomeDataUseCase
@@ -47,6 +48,8 @@ class MainViewModelFactory(private val application: Application) : ViewModelProv
                 com.example.akibazone.presentation.favorites.FavoritesViewModel(repository) as T
             modelClass.isAssignableFrom(com.example.akibazone.presentation.history.HistoryViewModel::class.java) ->
                 com.example.akibazone.presentation.history.HistoryViewModel(repository) as T
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) ->
+                ProfileViewModel(repository) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
