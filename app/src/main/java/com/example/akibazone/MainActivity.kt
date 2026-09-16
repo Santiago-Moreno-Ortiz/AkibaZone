@@ -23,6 +23,8 @@ import com.example.akibazone.presentation.anime.AnimeDetailScreen
 import com.example.akibazone.presentation.anime.AnimeDetailViewModel
 import com.example.akibazone.presentation.home.HomeScreen
 import com.example.akibazone.presentation.home.HomeViewModel
+import com.example.akibazone.presentation.history.HistoryScreen
+import com.example.akibazone.presentation.history.HistoryViewModel
 import com.example.akibazone.ui.theme.AkibaZoneTheme
 import com.example.akibazone.ui.theme.Background
 import com.example.akibazone.ui.theme.Primary
@@ -179,7 +181,19 @@ fun MainApp() {
                     }
                 )
             }
-            composable(Screen.History.route) { PlaceholderScreen("Historial pendiente de implementar") }
+            composable(Screen.History.route) {
+                val viewModel: HistoryViewModel = viewModel(
+                    factory = MainViewModelFactory(
+                        androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application
+                    )
+                )
+                HistoryScreen(
+                    viewModel = viewModel,
+                    onAnimeClick = { animeId ->
+                        navController.navigate(Screen.Detail.createRoute(animeId))
+                    }
+                )
+            }
             composable(Screen.Profile.route) {
                 val viewModel: com.example.akibazone.presentation.profile.AuthViewModel = viewModel(factory = MainViewModelFactory(androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application))
                 com.example.akibazone.presentation.profile.ProfileScreen(

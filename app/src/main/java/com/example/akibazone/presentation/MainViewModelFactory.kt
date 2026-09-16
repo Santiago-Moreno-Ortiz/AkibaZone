@@ -13,6 +13,7 @@ import com.example.akibazone.domain.usecase.GetAnimeDetailUseCase
 import com.example.akibazone.domain.usecase.GetHomeDataUseCase
 import com.example.akibazone.domain.usecase.SearchAnimeUseCase
 import com.example.akibazone.domain.usecase.ToggleFavoriteUseCase
+import com.example.akibazone.domain.usecase.AddToHistoryUseCase
 
 class MainViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
     
@@ -33,7 +34,8 @@ class MainViewModelFactory(private val application: Application) : ViewModelProv
             modelClass.isAssignableFrom(com.example.akibazone.presentation.anime.AnimeDetailViewModel::class.java) -> 
                 com.example.akibazone.presentation.anime.AnimeDetailViewModel(
                     GetAnimeDetailUseCase(repository),
-                    ToggleFavoriteUseCase(repository)
+                    ToggleFavoriteUseCase(repository),
+                    AddToHistoryUseCase(repository)
                 ) as T
             modelClass.isAssignableFrom(com.example.akibazone.presentation.explore.ExploreViewModel::class.java) ->
                 com.example.akibazone.presentation.explore.ExploreViewModel(SearchAnimeUseCase(repository)) as T
@@ -43,6 +45,8 @@ class MainViewModelFactory(private val application: Application) : ViewModelProv
                 com.example.akibazone.presentation.profile.AuthViewModel() as T
             modelClass.isAssignableFrom(com.example.akibazone.presentation.favorites.FavoritesViewModel::class.java) ->
                 com.example.akibazone.presentation.favorites.FavoritesViewModel(repository) as T
+            modelClass.isAssignableFrom(com.example.akibazone.presentation.history.HistoryViewModel::class.java) ->
+                com.example.akibazone.presentation.history.HistoryViewModel(repository) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }

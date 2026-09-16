@@ -304,6 +304,10 @@ class AnimeRepository(
         )
         animeDao.insertAnime(dataAnime)
     }
+
+    suspend fun clearHistory() = withContext(Dispatchers.IO) {
+        animeDao.clearHistory()
+    }
 }
 
 fun com.example.akibazone.data.model.Anime.toDomain(): Anime {
