@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -23,6 +24,11 @@ import com.example.akibazone.presentation.anime.AnimeDetailScreen
 import com.example.akibazone.presentation.anime.AnimeDetailViewModel
 import com.example.akibazone.presentation.home.HomeScreen
 import com.example.akibazone.presentation.home.HomeViewModel
+import com.example.akibazone.presentation.history.HistoryScreen
+import com.example.akibazone.presentation.history.HistoryViewModel
+import com.example.akibazone.presentation.profile.ProfileViewModel
+import com.example.akibazone.presentation.settings.SettingsScreen
+import com.example.akibazone.presentation.settings.SettingsViewModel
 import com.example.akibazone.ui.theme.AkibaZoneTheme
 import com.example.akibazone.ui.theme.Background
 import com.example.akibazone.ui.theme.Primary
@@ -43,8 +49,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            AkibaZoneTheme {
-                MainApp()
+            val application = applicationContext as android.app.Application
+            val settingsViewModel: SettingsViewModel = viewModel(
+                factory = MainViewModelFactory(application)
+            )
+            val themePreference by settingsViewModel.themePreference.collectAsState()
+            AkibaZoneTheme(themePreference = themePreference) {
+                MainApp(settingsViewModel)
             }
         }
     }
@@ -52,7 +63,7 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainApp() {
+fun MainApp(settingsViewModel: SettingsViewModel) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -179,14 +190,33 @@ fun MainApp() {
                     }
                 )
             }
-            composable(Screen.History.route) { PlaceholderScreen("Historial pendiente de implementar") }
+            composable(Screen.History.route) {
+                val viewModel: HistoryViewModel = viewModel(
+                    factory = MainViewModelFactory(
+                        androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application
+                    )
+                )
+                HistoryScreen(
+                    viewModel = viewModel,
+                    onAnimeClick = { animeId ->
+                        navController.navigate(Screen.Detail.createRoute(animeId))
+                    }
+                )
+            }
             composable(Screen.Profile.route) {
-                val viewModel: com.example.akibazone.presentation.profile.AuthViewModel = viewModel(factory = MainViewModelFactory(androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application))
+                val application = androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application
+                val viewModel: com.example.akibazone.presentation.profile.AuthViewModel = viewModel(factory = MainViewModelFactory(application))
+                val profileViewModel: ProfileViewModel = viewModel(factory = MainViewModelFactory(application))
                 com.example.akibazone.presentation.profile.ProfileScreen(
                     viewModel = viewModel,
+                    profileViewModel = profileViewModel,
                     onFavoritesClick = { navigateTo(Screen.Favorites.route) },
-                    onHistoryClick = { navigateTo(Screen.History.route) }
+                    onHistoryClick = { navigateTo(Screen.History.route) },
+                    onSettingsClick = { navController.navigate(Screen.Settings.route) }
                 )
+            }
+            composable(Screen.Settings.route) {
+                SettingsScreen(viewModel = settingsViewModel)
             }
             composable(Screen.Detail.route) { backStackEntry ->
                 val animeId = backStackEntry.arguments?.getString("animeId") ?: ""

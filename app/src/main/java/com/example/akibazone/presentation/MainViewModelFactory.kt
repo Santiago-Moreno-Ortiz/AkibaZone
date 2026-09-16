@@ -6,13 +6,17 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.akibazone.data.local.AppDatabase
 import com.example.akibazone.data.network.AnimeScraper
 import com.example.akibazone.data.network.NetworkModule
+import com.example.akibazone.data.preferences.SettingsRepository
 import com.example.akibazone.data.repository.AnimeRepository
 import com.example.akibazone.presentation.home.HomeViewModel
+import com.example.akibazone.presentation.profile.ProfileViewModel
+import com.example.akibazone.presentation.settings.SettingsViewModel
 
 import com.example.akibazone.domain.usecase.GetAnimeDetailUseCase
 import com.example.akibazone.domain.usecase.GetHomeDataUseCase
 import com.example.akibazone.domain.usecase.SearchAnimeUseCase
 import com.example.akibazone.domain.usecase.ToggleFavoriteUseCase
+import com.example.akibazone.domain.usecase.AddToHistoryUseCase
 
 class MainViewModelFactory(private val application: Application) : ViewModelProvider.Factory {
     
@@ -26,6 +30,8 @@ class MainViewModelFactory(private val application: Application) : ViewModelProv
         )
     }
 
+    private val settingsRepository by lazy { SettingsRepository(application) }
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
             modelClass.isAssignableFrom(HomeViewModel::class.java) -> 
@@ -33,7 +39,8 @@ class MainViewModelFactory(private val application: Application) : ViewModelProv
             modelClass.isAssignableFrom(com.example.akibazone.presentation.anime.AnimeDetailViewModel::class.java) -> 
                 com.example.akibazone.presentation.anime.AnimeDetailViewModel(
                     GetAnimeDetailUseCase(repository),
-                    ToggleFavoriteUseCase(repository)
+                    ToggleFavoriteUseCase(repository),
+                    AddToHistoryUseCase(repository)
                 ) as T
             modelClass.isAssignableFrom(com.example.akibazone.presentation.explore.ExploreViewModel::class.java) ->
                 com.example.akibazone.presentation.explore.ExploreViewModel(SearchAnimeUseCase(repository)) as T
@@ -43,6 +50,12 @@ class MainViewModelFactory(private val application: Application) : ViewModelProv
                 com.example.akibazone.presentation.profile.AuthViewModel() as T
             modelClass.isAssignableFrom(com.example.akibazone.presentation.favorites.FavoritesViewModel::class.java) ->
                 com.example.akibazone.presentation.favorites.FavoritesViewModel(repository) as T
+            modelClass.isAssignableFrom(com.example.akibazone.presentation.history.HistoryViewModel::class.java) ->
+                com.example.akibazone.presentation.history.HistoryViewModel(repository) as T
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) ->
+                ProfileViewModel(repository) as T
+            modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
+                SettingsViewModel(settingsRepository) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }

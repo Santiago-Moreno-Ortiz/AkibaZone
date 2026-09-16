@@ -23,4 +23,11 @@ interface AnimeDao {
 
     @Query("DELETE FROM anime_history WHERE id = :animeId")
     suspend fun deleteAnime(animeId: String)
+
+    /**
+     * El historial comparte tabla con favoritos. Solo se eliminan las filas
+     * que no están marcadas como favoritas.
+     */
+    @Query("DELETE FROM anime_history WHERE isFavorite = 0")
+    suspend fun clearHistory()
 }

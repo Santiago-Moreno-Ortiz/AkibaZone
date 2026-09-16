@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.akibazone.domain.model.Anime
 import com.example.akibazone.domain.model.AnimeDetail
+import com.example.akibazone.domain.usecase.AddToHistoryUseCase
 import com.example.akibazone.domain.usecase.GetAnimeDetailUseCase
 import com.example.akibazone.domain.usecase.ToggleFavoriteUseCase
 import com.example.akibazone.presentation.state.UiState
@@ -14,7 +15,8 @@ import kotlinx.coroutines.launch
 
 class AnimeDetailViewModel(
     private val getAnimeDetailUseCase: GetAnimeDetailUseCase,
-    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val addToHistoryUseCase: AddToHistoryUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<UiState<AnimeDetail>>(UiState.Loading)
@@ -26,6 +28,7 @@ class AnimeDetailViewModel(
             try {
                 val detail = getAnimeDetailUseCase(animeId)
                 if (detail != null) {
+                    addToHistoryUseCase(detail.anime)
                     _uiState.value = UiState.Success(detail)
                 } else {
                     _uiState.value = UiState.Error("No se encontró información")
