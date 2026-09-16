@@ -28,7 +28,8 @@ fun ProfileScreen(
     viewModel: AuthViewModel,
     profileViewModel: ProfileViewModel,
     onFavoritesClick: () -> Unit,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val statsState by profileViewModel.statsState.collectAsState()
@@ -56,7 +57,8 @@ fun ProfileScreen(
                     statsState = statsState,
                     onLogout = viewModel::logout,
                     onFavoritesClick = onFavoritesClick,
-                    onHistoryClick = onHistoryClick
+                    onHistoryClick = onHistoryClick,
+                    onSettingsClick = onSettingsClick
                 )
             }
             is AuthUiState.Error -> {
@@ -201,7 +203,8 @@ fun ProfileContent(
     statsState: UiState<ProfileStats>,
     onLogout: () -> Unit,
     onFavoritesClick: () -> Unit,
-    onHistoryClick: () -> Unit
+    onHistoryClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -268,7 +271,7 @@ fun ProfileContent(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        ProfileMenuItem(icon = Icons.Default.Settings, label = "Configuración (pendiente)")
+        ProfileMenuItem(icon = Icons.Default.Settings, label = "Configuración", onClick = onSettingsClick)
         ProfileMenuItem(icon = Icons.Default.History, label = "Mi Historial", onClick = onHistoryClick)
         ProfileMenuItem(icon = Icons.Default.Favorite, label = "Mis Favoritos", onClick = onFavoritesClick)
         

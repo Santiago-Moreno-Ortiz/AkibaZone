@@ -6,9 +6,11 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.akibazone.data.local.AppDatabase
 import com.example.akibazone.data.network.AnimeScraper
 import com.example.akibazone.data.network.NetworkModule
+import com.example.akibazone.data.preferences.SettingsRepository
 import com.example.akibazone.data.repository.AnimeRepository
 import com.example.akibazone.presentation.home.HomeViewModel
 import com.example.akibazone.presentation.profile.ProfileViewModel
+import com.example.akibazone.presentation.settings.SettingsViewModel
 
 import com.example.akibazone.domain.usecase.GetAnimeDetailUseCase
 import com.example.akibazone.domain.usecase.GetHomeDataUseCase
@@ -27,6 +29,8 @@ class MainViewModelFactory(private val application: Application) : ViewModelProv
             com.example.akibazone.data.network.NetworkModule.jikanService
         )
     }
+
+    private val settingsRepository by lazy { SettingsRepository(application) }
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return when {
@@ -50,6 +54,8 @@ class MainViewModelFactory(private val application: Application) : ViewModelProv
                 com.example.akibazone.presentation.history.HistoryViewModel(repository) as T
             modelClass.isAssignableFrom(ProfileViewModel::class.java) ->
                 ProfileViewModel(repository) as T
+            modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
+                SettingsViewModel(settingsRepository) as T
             else -> throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
