@@ -22,8 +22,16 @@ data class Episode(
     val id: String,
     val number: String,
     val title: String? = null,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val url: String? = null,
+    val site: String? = null,
+    val playbackType: EpisodePlaybackType? = null
 )
+
+enum class EpisodePlaybackType {
+    DIRECT_STREAM,
+    EXTERNAL
+}
 
 data class AnimeDetail(
     val anime: Anime,

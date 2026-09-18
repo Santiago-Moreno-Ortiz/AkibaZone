@@ -81,7 +81,15 @@ data class Media(
     @SerializedName("genres") val genres: List<String>?,
     @SerializedName("studios") val studios: StudioConnection?,
     @SerializedName("nextAiringEpisode") val nextAiringEpisode: AiringSchedule?,
-    @SerializedName("trailer") val trailer: MediaTrailer?
+    @SerializedName("trailer") val trailer: MediaTrailer?,
+    @SerializedName("streamingEpisodes") val streamingEpisodes: List<MediaStreamingEpisode>?
+)
+
+data class MediaStreamingEpisode(
+    @SerializedName("title") val title: String?,
+    @SerializedName("thumbnail") val thumbnail: String?,
+    @SerializedName("url") val url: String?,
+    @SerializedName("site") val site: String?
 )
 
 data class MediaTitle(

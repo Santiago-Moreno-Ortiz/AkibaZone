@@ -2,6 +2,7 @@ package com.example.akibazone.presentation.player
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.akibazone.data.network.PlaybackSource
 import com.example.akibazone.data.repository.AnimeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,7 +10,8 @@ import kotlinx.coroutines.launch
 
 sealed interface PlayerUiState {
     object Loading : PlayerUiState
-    data class Success(val videoUrl: String) : PlayerUiState
+    data class Ready(val source: PlaybackSource) : PlayerUiState
+    object NoSource : PlayerUiState
     data class Error(val message: String) : PlayerUiState
 }
 
@@ -25,12 +27,11 @@ class PlayerViewModel(private val repository: AnimeRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.value = PlayerUiState.Loading
             try {
-                // episodeId es el link completo del episodio o el id para la API
-                val links = repository.getVideoLinks(episodeId)
-                if (links.isNotEmpty()) {
-                    _uiState.value = PlayerUiState.Success(links.first())
+                val sources = repository.getPlaybackSources(episodeId)
+                if (sources.isNotEmpty()) {
+                    _uiState.value = PlayerUiState.Ready(sources.first())
                 } else {
-                    _uiState.value = PlayerUiState.Error("No hay un enlace de video directo disponible para este episodio.")
+                    _uiState.value = PlayerUiState.NoSource
                 }
             } catch (e: Exception) {
                 if (e is kotlinx.coroutines.CancellationException) throw e

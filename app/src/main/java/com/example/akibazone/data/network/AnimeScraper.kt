@@ -86,10 +86,11 @@ class AnimeScraper {
 
     fun getAnimeDetail(animeLink: String): AnimeDetail? {
         try {
+            val slug = animeLink.trimEnd('/').substringAfterLast("/")
             val fullUrl = when {
                 animeLink.startsWith("http") -> animeLink
                 animeLink.startsWith("/") -> "$baseUrl$animeLink"
-                else -> "$baseUrl/anime/$animeLink"
+                else -> "$baseUrl/anime/$slug"
             }
             val doc = Jsoup.connect(fullUrl)
                 .userAgent(userAgent)
@@ -100,30 +101,23 @@ class AnimeScraper {
             val synopsis = doc.select("div.Description p").text()
             val imageUrl = doc.select("div.AnimeCover div.Image img").attr("abs:src")
             val genres = doc.select("nav.Nvgnrs a").map { it.text() }
-            val id = animeLink.substringAfterLast("/")
-            
-            val anime = Anime(id, title, imageUrl, animeLink)
+            val anime = Anime(slug, title, imageUrl, "/anime/$slug")
             
             // Episodes are often loaded via Javascript in AnimeFLV, but let's try to find the list in the script
             // or use the standard pattern.
             val episodes = mutableListOf<Episode>()
-            val script = doc.select("script").filter { it.data().contains("var episodes =") }.firstOrNull()
+            val script = doc.select("script").firstOrNull { it.data().contains("var episodes") }
             
             if (script != null) {
-                // Parse the episodes from the Javascript variable
-                // Pattern: var episodes = [[1,1],[2,2],...];
                 val data = script.data()
-                val episodesData = data.substringAfter("var episodes = [").substringBefore("];")
-                // This needs more robust parsing, but for now let's assume simple pattern
-                // [1, 100] -> episode 1, id 100
-                val regex = Regex("\\[(\\d+),(\\d+)\\]")
-                val matches = regex.findAll(episodesData)
+                val episodesData = Regex(
+                    """var\s+episodes\s*=\s*(\[\s*\[.*?]])\s*;""",
+                    setOf(RegexOption.DOT_MATCHES_ALL),
+                ).find(data)?.groupValues?.getOrNull(1).orEmpty()
+                val matches = Regex("""\[\s*(\d+(?:\.\d+)?)\s*,\s*\d+\s*]""").findAll(episodesData)
                 for (match in matches) {
                     val num = match.groupValues[1]
-                    val epId = match.groupValues[2]
-                    // Link pattern: /ver/slug-num
-                    val epLink = "/ver/$id-$num"
-                    episodes.add(Episode(id, num, epLink))
+                    episodes.add(Episode(slug, num, AnimeFlvPlaybackMapper.episodeLink(slug, num)))
                 }
             }
             
@@ -143,19 +137,19 @@ class AnimeScraper {
                 .timeout(15000)
                 .get()
             
-            // AnimeFLV stores video servers in a Javascript variable 'videos'
-            val script = doc.select("script").filter { it.data().contains("var videos =") }.firstOrNull()
+            // Only direct media URLs are returned. Provider pages or opaque codes are not streams.
+            val script = doc.select("script").firstOrNull { it.data().contains("var videos") }
             if (script != null) {
                 val data = script.data()
-                // The 'videos' variable contains a JSON-like structure with server links
-                // Example: var videos = {"SUB":[{"server":"stape","code":"...","url":"..."}]}
-                // We'll extract URLs using regex for simplicity
-                val regex = Regex("\"code\":\"([^\"]+)\"")
+                val regex = Regex("\"(?:url|code)\"\\s*:\\s*\"([^\"]+)\"")
                 val matches = regex.findAll(data)
                 for (match in matches) {
-                    val code = match.groupValues[1]
-                    if (code.contains("http")) {
-                        videoLinks.add(code.replace("\\/", "/"))
+                    val candidate = match.groupValues[1]
+                        .replace("\\/", "/")
+                        .replace("\\u0026", "&")
+                        .replace("\\u003d", "=")
+                    if (PlaybackSourceClassifier.classify(candidate) != null) {
+                        videoLinks.add(candidate)
                     }
                 }
             }
