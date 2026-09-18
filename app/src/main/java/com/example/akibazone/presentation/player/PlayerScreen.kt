@@ -27,6 +27,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -34,6 +35,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.example.akibazone.ui.theme.Error
 import com.example.akibazone.ui.theme.Primary
+import com.example.akibazone.data.network.PlaybackFormat
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -114,11 +116,31 @@ fun PlayerScreen(
                 }
             }
 
-            is PlayerUiState.Success -> {
+            is PlayerUiState.NoSource -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No se pudo obtener una fuente de reproducción para este episodio.",
+                        color = Error
+                    )
+                }
+            }
 
-                LaunchedEffect(state.videoUrl, exoPlayer) {
+            is PlayerUiState.Ready -> {
+
+                LaunchedEffect(state.source, exoPlayer) {
                     exoPlayer.setMediaItem(
-                        MediaItem.fromUri(state.videoUrl)
+                        MediaItem.Builder()
+                            .setUri(state.source.url)
+                            .setMimeType(
+                                when (state.source.format) {
+                                    PlaybackFormat.HLS -> MimeTypes.APPLICATION_M3U8
+                                    PlaybackFormat.MP4 -> MimeTypes.VIDEO_MP4
+                                }
+                            )
+                            .build()
                     )
 
                     exoPlayer.prepare()

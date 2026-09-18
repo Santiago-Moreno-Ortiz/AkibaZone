@@ -131,6 +131,12 @@ object AnilistQueries {
                   episode
                   timeUntilAiring
                 }
+                streamingEpisodes {
+                  title
+                  thumbnail
+                  url
+                  site
+                }
               }
             }
         """.trimIndent()

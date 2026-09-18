@@ -1,5 +1,9 @@
 package com.example.akibazone.presentation.anime
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -24,11 +29,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.akibazone.domain.model.AnimeDetail
+import com.example.akibazone.domain.model.Episode
+import com.example.akibazone.domain.model.EpisodePlaybackType
 import com.example.akibazone.presentation.state.UiState
 import com.example.akibazone.ui.components.GenreChip
 import com.example.akibazone.ui.theme.*
@@ -63,6 +71,21 @@ fun DetailContent(
     onPlayClick: (String) -> Unit,
     onFavoriteClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val openEpisode: (Episode) -> Unit = { episode ->
+        if (episode.playbackType == EpisodePlaybackType.EXTERNAL) {
+            if (!openExternalEpisode(context, episode.url)) {
+                Toast.makeText(
+                    context,
+                    "No hay una aplicación disponible para abrir este episodio.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        } else {
+            onPlayClick(episode.url ?: episode.id)
+        }
+    }
+
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
             Box(modifier = Modifier.height(340.dp).fillMaxWidth()) {
@@ -138,16 +161,17 @@ fun DetailContent(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Button(
                         onClick = {
-                            detail.episodes.firstOrNull()?.let { onPlayClick(it.id) }
+                            detail.episodes.firstOrNull()?.let(openEpisode)
                         },
                         enabled = detail.episodes.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(containerColor = Primary),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Icon(Icons.Default.PlayArrow, null)
+                        val isExternal = detail.episodes.firstOrNull()?.playbackType == EpisodePlaybackType.EXTERNAL
+                        Icon(if (isExternal) Icons.AutoMirrored.Filled.OpenInNew else Icons.Default.PlayArrow, null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Ver Episodio 1", fontWeight = FontWeight.Bold)
+                        Text(if (isExternal) "Abrir episodio" else "Reproducir", fontWeight = FontWeight.Bold)
                     }
 
                     Spacer(Modifier.width(12.dp))
@@ -206,41 +230,79 @@ fun DetailContent(
 
                 Spacer(Modifier.height(24.dp))
                 if (detail.episodes.isEmpty()) {
-                    Text("Esta fuente no proporciona enlaces de reproducción. Total informado: ${detail.anime.episodesCount ?: "desconocido"} episodios.", color = TextSecondary)
+                    Text("No hay información oficial de episodios disponible.", color = TextSecondary)
+                } else {
+                    Text("Episodios disponibles", style = MaterialTheme.typography.titleLarge, color = TextPrimary)
                 }
-                Text("Episodios disponibles (${detail.episodes.size})", style = MaterialTheme.typography.titleLarge, color = TextPrimary)
             }
         }
 
         items(detail.episodes) { episode ->
             ListItem(
-                headlineContent = { Text(episode.title ?: "Episodio ${episode.number}", color = TextPrimary, fontWeight = FontWeight.SemiBold) },
+                headlineContent = {
+                    Text(
+                        episode.title
+                            ?: episode.number.takeIf { it.isNotBlank() }?.let { "Episodio $it" }
+                            ?: "Episodio disponible",
+                        color = TextPrimary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
+                supportingContent = episode.site?.takeIf { it.isNotBlank() }?.let { site ->
+                    { Text(site, color = TextSecondary) }
+                },
                 leadingContent = {
-                    Surface(
-                        color = Primary.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(6.dp)
-                    ) {
-                        Text(
-                            text = episode.number.padStart(2, '0'),
-                            color = Primary,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    if (!episode.imageUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = episode.imageUrl,
+                            contentDescription = episode.title,
+                            modifier = Modifier
+                                .width(112.dp)
+                                .height(64.dp)
+                                .clip(RoundedCornerShape(6.dp)),
+                            contentScale = ContentScale.Crop
                         )
+                    } else {
+                        Surface(
+                            color = Primary.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (episode.playbackType == EpisodePlaybackType.EXTERNAL) Icons.AutoMirrored.Filled.OpenInNew else Icons.Default.PlayArrow,
+                                contentDescription = null,
+                                tint = Primary,
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
                     }
                 },
                 trailingContent = {
-                    IconButton(onClick = { onPlayClick(episode.id) }) {
-                        Icon(Icons.Default.PlayArrow, null, tint = Primary)
+                    TextButton(onClick = { openEpisode(episode) }) {
+                        Text(if (episode.playbackType == EpisodePlaybackType.EXTERNAL) "Abrir episodio" else "Reproducir")
                     }
                 },
                 modifier = Modifier
                     .background(Background)
-                    .clickable { onPlayClick(episode.id) }
+                    .clickable { openEpisode(episode) }
                     .padding(horizontal = 8.dp),
                 colors = ListItemDefaults.colors(containerColor = Background)
             )
             HorizontalDivider(color = BackgroundSecondary, thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
         }
+    }
+}
+
+private fun openExternalEpisode(context: android.content.Context, url: String?): Boolean {
+    val uri = url?.trim()?.takeIf { it.isNotEmpty() }?.let(Uri::parse) ?: return false
+    if (uri.scheme?.lowercase() !in setOf("http", "https")) return false
+
+    return try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+        true
+    } catch (_: ActivityNotFoundException) {
+        false
+    } catch (_: SecurityException) {
+        false
     }
 }
 

@@ -2,6 +2,7 @@ package com.example.akibazone.data.repository
 
 import android.util.Log
 import com.example.akibazone.data.local.AnimeDao
+import com.example.akibazone.data.mapper.AniListEpisodeMapper
 import com.example.akibazone.data.mapper.SynopsisNormalizer
 import com.example.akibazone.domain.model.Anime
 import com.example.akibazone.domain.model.AnimeDetail
@@ -10,6 +11,8 @@ import com.example.akibazone.data.network.AnimeScraper
 import com.example.akibazone.data.network.AnilistApiService
 import com.example.akibazone.data.network.AnilistQueries
 import com.example.akibazone.data.network.JikanApiService
+import com.example.akibazone.data.network.PlaybackSource
+import com.example.akibazone.data.network.PlaybackSourceClassifier
 import kotlinx.coroutines.CancellationException
 import com.example.akibazone.data.network.dto.AnilistData
 import com.example.akibazone.data.network.dto.AnilistRequest
@@ -38,12 +41,13 @@ class AnimeRepository(
     }
 
     private fun JikanAnime.toDomain(): Anime {
-        val id = id?.toString() ?: return Anime(id = "", title = "Sin título", imageUrl = "", link = "")
+        val sourceId = id?.let { "jikan:$it" }
+            ?: return Anime(id = "", title = "Sin título", imageUrl = "", link = "")
         return Anime(
-            id = id,
+            id = sourceId,
             title = title ?: englishTitle ?: japaneseTitle ?: "Sin título",
             imageUrl = images?.jpg?.largeImageUrl ?: images?.jpg?.imageUrl.orEmpty(),
-            link = id,
+            link = sourceId,
             type = type,
             rating = score?.toString() ?: "0.0",
             description = SynopsisNormalizer.firstAvailable(synopsis),
@@ -217,6 +221,12 @@ class AnimeRepository(
     }
 
     suspend fun getAnimeDetail(animeId: String): AnimeDetail? = withContext(Dispatchers.IO) {
+        if (animeId.startsWith(JIKAN_ID_PREFIX)) {
+            val jikanId = animeId.removePrefix(JIKAN_ID_PREFIX).toIntOrNull()
+                ?: return@withContext null
+            return@withContext getJikanAnimeDetail(jikanId)
+        }
+
         try {
             val idInt = animeId.toIntOrNull()
             if (idInt != null) {
@@ -225,11 +235,9 @@ class AnimeRepository(
                 val media = response.media
                 if (media != null) {
                     val anime = media.toDomain().copy(isFavorite = animeDao.getAnimeById(animeId)?.isFavorite ?: false)
-                    // AniList ofrece metadatos, no enlaces para reproducir episodios.
-                    val eps = emptyList<Episode>()
                     return@withContext AnimeDetail(
                         anime = anime,
-                        episodes = eps,
+                        episodes = AniListEpisodeMapper.toDomain(media.streamingEpisodes),
                         japaneseTitle = media.title?.native,
                         englishTitle = media.title?.english,
                         status = media.status,
@@ -246,23 +254,7 @@ class AnimeRepository(
             Log.e(TAG, "getAnimeDetail from AniList error: ${e.message}", e)
             if (isAniListForbidden(e)) Log.e(TAG, "AniList respondió HTTP 403; se usará Jikan")
             animeId.toIntOrNull()?.let { id ->
-                val detail = jikanService.getAnimeDetail(id).data
-                if (detail != null) {
-                    val anime = detail.toDomain().copy(
-                        isFavorite = animeDao.getAnimeById(animeId)?.isFavorite ?: false
-                    )
-                    return@withContext AnimeDetail(
-                        anime = anime,
-                        episodes = emptyList(),
-                        japaneseTitle = detail.japaneseTitle,
-                        englishTitle = detail.englishTitle,
-                        status = detail.status,
-                        year = detail.year?.toString(),
-                        format = detail.type,
-                        studio = detail.studios.firstOrNull()?.name,
-                        trailerUrl = detail.trailer?.youtubeId?.let { "https://www.youtube.com/watch?v=$it" }
-                    )
-                }
+                getJikanAnimeDetail(id)?.let { return@withContext it }
             }
             if (animeId.toIntOrNull() != null) throw e
         }
@@ -276,17 +268,47 @@ class AnimeRepository(
                     genres = detail.genres,
                     isFavorite = animeDao.getAnimeById(detail.anime.id)?.isFavorite ?: false
                 ),
-                episodes = detail.episodes.map { Episode(it.link, it.number, title = "Episodio ${it.number}") },
+                episodes = detail.episodes.map {
+                    Episode(
+                        id = it.link,
+                        number = it.number,
+                        title = "Episodio ${it.number}",
+                        site = "AnimeFLV"
+                    )
+                },
                 japaneseTitle = detail.anime.title
             )
         }
     }
 
-    suspend fun getVideoLinks(episodeLink: String): List<String> = withContext(Dispatchers.IO) {
-        // ExoPlayer necesita un archivo multimedia; una página de servidor no basta.
-        scraper.getVideoLinks(episodeLink).filter { link ->
-            val path = java.net.URI(link).path.orEmpty().lowercase()
-            path.endsWith(".m3u8") || path.endsWith(".mp4")
+    private suspend fun getJikanAnimeDetail(id: Int): AnimeDetail? {
+        val detail = jikanService.getAnimeDetail(id).data ?: return null
+        val anime = detail.toDomain().copy(
+            isFavorite = animeDao.getAnimeById("$JIKAN_ID_PREFIX$id")?.isFavorite ?: false
+        )
+        return AnimeDetail(
+            anime = anime,
+            episodes = emptyList(),
+            japaneseTitle = detail.japaneseTitle,
+            englishTitle = detail.englishTitle,
+            status = detail.status,
+            year = detail.year?.toString(),
+            format = detail.type,
+            studio = detail.studios.firstOrNull()?.name,
+            trailerUrl = detail.trailer?.youtubeId?.let { "https://www.youtube.com/watch?v=$it" }
+        )
+    }
+
+    suspend fun getPlaybackSources(episodeLink: String): List<PlaybackSource> = withContext(Dispatchers.IO) {
+        PlaybackSourceClassifier.classify(episodeLink)?.let { return@withContext listOf(it) }
+
+        try {
+            // El fallback heredado de AnimeFLV solo entrega URLs directas verificadas.
+            scraper.getVideoLinks(episodeLink).mapNotNull(PlaybackSourceClassifier::classify)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.w(TAG, "AnimeFLV playback fallback unavailable: ${e.message}")
+            emptyList()
         }
     }
 
@@ -307,6 +329,10 @@ class AnimeRepository(
 
     suspend fun clearHistory() = withContext(Dispatchers.IO) {
         animeDao.clearHistory()
+    }
+
+    private companion object {
+        const val JIKAN_ID_PREFIX = "jikan:"
     }
 }
 
