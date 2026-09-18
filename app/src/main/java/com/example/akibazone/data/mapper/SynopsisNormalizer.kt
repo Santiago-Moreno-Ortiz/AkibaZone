@@ -3,11 +3,7 @@ package com.example.akibazone.data.mapper
 import org.jsoup.Jsoup
 
 /**
- * Normalizes synopsis text before it reaches the UI.
- *
- * The application does not translate descriptions. It uses the first usable
- * value supplied by the selected data source and keeps the original language
- * when no Spanish synopsis is available.
+ * Normalizes synopsis text before it reaches the translation layer or UI.
  */
 object SynopsisNormalizer {
     private val placeholderPattern = Regex(

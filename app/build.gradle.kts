@@ -70,6 +70,7 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation(libs.gson)
     implementation(libs.jsoup)
+    implementation(libs.mlkit.translate)
     
     // Media Playback (Media3 es la versión actual de ExoPlayer)
     implementation(libs.media3.exoplayer)

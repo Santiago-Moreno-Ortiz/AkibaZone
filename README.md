@@ -105,6 +105,6 @@ Los favoritos son locales y no están asociados a una cuenta remota. El acceso e
 
 ## Autores
 
-Desarrollado para la Sustentación Final de Aplicaciones Android.
+Desarrollado para la Sustentación Final de Aplicaciones Android por Santiago Moreno
 
 El README anterior no especificaba nombres de autores.

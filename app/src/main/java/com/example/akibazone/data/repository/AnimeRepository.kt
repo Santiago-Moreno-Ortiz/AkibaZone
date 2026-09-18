@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.akibazone.data.local.AnimeDao
 import com.example.akibazone.data.mapper.AniListEpisodeMapper
 import com.example.akibazone.data.mapper.SynopsisNormalizer
+import com.example.akibazone.data.mapper.SynopsisTranslator
 import com.example.akibazone.domain.model.Anime
 import com.example.akibazone.domain.model.AnimeDetail
 import com.example.akibazone.domain.model.Episode
@@ -26,7 +27,8 @@ class AnimeRepository(
     private val animeDao: AnimeDao,
     private val scraper: AnimeScraper,
     private val anilistService: AnilistApiService,
-    private val jikanService: JikanApiService
+    private val jikanService: JikanApiService,
+    private val synopsisTranslator: SynopsisTranslator = SynopsisTranslator()
 ) {
     private val TAG = "AnimeRepository"
     private val jikanCacheMutex = Mutex()
@@ -234,7 +236,10 @@ class AnimeRepository(
                 val response = requestData(query)
                 val media = response.media
                 if (media != null) {
-                    val anime = media.toDomain().copy(isFavorite = animeDao.getAnimeById(animeId)?.isFavorite ?: false)
+                    val anime = media.toDomain().copy(
+                        description = translateSynopsis(media.description),
+                        isFavorite = animeDao.getAnimeById(animeId)?.isFavorite ?: false
+                    )
                     return@withContext AnimeDetail(
                         anime = anime,
                         episodes = AniListEpisodeMapper.toDomain(media.streamingEpisodes),
@@ -284,6 +289,7 @@ class AnimeRepository(
     private suspend fun getJikanAnimeDetail(id: Int): AnimeDetail? {
         val detail = jikanService.getAnimeDetail(id).data ?: return null
         val anime = detail.toDomain().copy(
+            description = translateSynopsis(detail.synopsis),
             isFavorite = animeDao.getAnimeById("$JIKAN_ID_PREFIX$id")?.isFavorite ?: false
         )
         return AnimeDetail(
@@ -297,6 +303,14 @@ class AnimeRepository(
             studio = detail.studios.firstOrNull()?.name,
             trailerUrl = detail.trailer?.youtubeId?.let { "https://www.youtube.com/watch?v=$it" }
         )
+    }
+
+    private suspend fun translateSynopsis(value: String?): String? = try {
+        synopsisTranslator.translateToSpanish(value)
+    } catch (e: Exception) {
+        if (e is CancellationException) throw e
+        Log.w(TAG, "No se pudo traducir la sinopsis al español: ${e.message}")
+        null
     }
 
     suspend fun getPlaybackSources(episodeLink: String): List<PlaybackSource> = withContext(Dispatchers.IO) {
