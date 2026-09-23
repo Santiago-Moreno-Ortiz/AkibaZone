@@ -23,5 +23,7 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector?
         fun createRoute(episodeId: String) = "player/${android.net.Uri.encode(episodeId)}"
     }
     
+    object DemoPlayer : Screen("demo-player", "Video de demostración")
+
     object Settings : Screen("settings", "Configuración")
 }

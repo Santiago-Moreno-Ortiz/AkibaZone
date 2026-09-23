@@ -31,7 +31,7 @@ import com.example.akibazone.ui.theme.TextPrimary
 import com.example.akibazone.ui.theme.TextSecondary
 
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel) {
+fun SettingsScreen(viewModel: SettingsViewModel, onDemoClick: () -> Unit) {
     val themePreference by viewModel.themePreference.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
@@ -76,6 +76,17 @@ fun SettingsScreen(viewModel: SettingsViewModel) {
             )
         }
 
+        Spacer(Modifier.height(28.dp))
+        HorizontalDivider(color = BackgroundSecondary)
+        Spacer(Modifier.height(28.dp))
+
+        Text("Demostración", style = MaterialTheme.typography.titleLarge, color = TextPrimary)
+        Spacer(Modifier.height(8.dp))
+        Text("Prueba el reproductor interno y Picture-in-Picture.", color = TextSecondary)
+        Spacer(Modifier.height(12.dp))
+        androidx.compose.material3.Button(onClick = onDemoClick) {
+            Text("Probar reproductor y PIP")
+        }
         Spacer(Modifier.height(28.dp))
         HorizontalDivider(color = BackgroundSecondary)
         Spacer(Modifier.height(28.dp))

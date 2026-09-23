@@ -1,5 +1,16 @@
 package com.example.akibazone
 
+import android.app.PictureInPictureParams
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.os.Build
+import android.util.Rational
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -46,6 +57,43 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 class MainActivity : ComponentActivity() {
+    private var playerScreenActive = false
+    private var playbackAllowsPip = false
+    private var pipMode by mutableStateOf(false)
+
+    private fun supportsPip() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+        packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun pipParams(): PictureInPictureParams {
+        val builder = PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            builder.setAutoEnterEnabled(playerScreenActive && playbackAllowsPip)
+        }
+        return builder.build()
+    }
+
+    private fun updatePipParams() {
+        if (supportsPip() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            setPictureInPictureParams(pipParams())
+        }
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.S && supportsPip() &&
+            playerScreenActive && playbackAllowsPip && !isInPictureInPictureMode
+        ) {
+            enterPictureInPictureMode(pipParams())
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        pipMode = isInPictureInPictureMode
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -55,7 +103,19 @@ class MainActivity : ComponentActivity() {
             )
             val themePreference by settingsViewModel.themePreference.collectAsState()
             AkibaZoneTheme(themePreference = themePreference) {
-                MainApp(settingsViewModel)
+                MainApp(
+                    settingsViewModel = settingsViewModel,
+                    isInPip = pipMode,
+                    onPlayerScreenChanged = { active ->
+                        playerScreenActive = active
+                        if (!active) playbackAllowsPip = false
+                        updatePipParams()
+                    },
+                    onPipEligibilityChanged = { allowed ->
+                        playbackAllowsPip = allowed
+                        updatePipParams()
+                    }
+                )
             }
         }
     }
@@ -63,11 +123,28 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainApp(settingsViewModel: SettingsViewModel) {
+fun MainApp(
+    settingsViewModel: SettingsViewModel,
+    isInPip: Boolean,
+    onPlayerScreenChanged: (Boolean) -> Unit,
+    onPipEligibilityChanged: (Boolean) -> Unit
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
+
+    val reportPlayerScreen by rememberUpdatedState(onPlayerScreenChanged)
+    DisposableEffect(navController) {
+        val listener = androidx.navigation.NavController.OnDestinationChangedListener { _, destination, _ ->
+            reportPlayerScreen(destination.route == Screen.Player.route || destination.route == Screen.DemoPlayer.route)
+        }
+        navController.addOnDestinationChangedListener(listener)
+        onDispose {
+            navController.removeOnDestinationChangedListener(listener)
+            reportPlayerScreen(false)
+        }
+    }
 
     val items = listOf(
         Screen.Home,
@@ -94,8 +171,9 @@ fun MainApp(settingsViewModel: SettingsViewModel) {
     }
 
     Scaffold(
+        contentWindowInsets = if (isInPip) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
         topBar = {
-            if (currentRoute != Screen.Player.route) {
+            if (currentRoute != Screen.Player.route && currentRoute != Screen.DemoPlayer.route) {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
@@ -131,7 +209,7 @@ fun MainApp(settingsViewModel: SettingsViewModel) {
             }
         },
         bottomBar = {
-            if (currentRoute != Screen.Player.route) {
+            if (currentRoute != Screen.Player.route && currentRoute != Screen.DemoPlayer.route) {
                 NavigationBar(
                     containerColor = Background,
                     contentColor = Primary
@@ -216,7 +294,10 @@ fun MainApp(settingsViewModel: SettingsViewModel) {
                 )
             }
             composable(Screen.Settings.route) {
-                SettingsScreen(viewModel = settingsViewModel)
+                SettingsScreen(
+                    viewModel = settingsViewModel,
+                    onDemoClick = { navController.navigate(Screen.DemoPlayer.route) }
+                )
             }
             composable(Screen.Detail.route) { backStackEntry ->
                 val animeId = backStackEntry.arguments?.getString("animeId") ?: ""
@@ -229,11 +310,23 @@ fun MainApp(settingsViewModel: SettingsViewModel) {
                     }
                 )
             }
+            composable(Screen.DemoPlayer.route) {
+                val viewModel = viewModel { com.example.akibazone.presentation.player.PlayerViewModel() }
+                com.example.akibazone.presentation.player.PlayerScreen(
+                    input = com.example.akibazone.presentation.player.PlayerInput.Demo,
+                    viewModel = viewModel,
+                    isInPip = isInPip,
+                    onPipEligibilityChanged = onPipEligibilityChanged,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
             composable(Screen.Player.route) { backStackEntry ->
                 val episodeId = backStackEntry.arguments?.getString("episodeId") ?: ""
                 val viewModel: com.example.akibazone.presentation.player.PlayerViewModel = viewModel(factory = MainViewModelFactory(androidx.compose.ui.platform.LocalContext.current.applicationContext as android.app.Application))
                 com.example.akibazone.presentation.player.PlayerScreen(
-                    episodeId = episodeId,
+                    input = com.example.akibazone.presentation.player.PlayerInput.Episode(episodeId),
+                    isInPip = isInPip,
+                    onPipEligibilityChanged = onPipEligibilityChanged,
                     viewModel = viewModel,
                     onBackClick = { navController.popBackStack() }
                 )
